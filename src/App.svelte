@@ -20,7 +20,7 @@
   };
 </script>
 
-<main class="w-screen h-screen text-white text-xl">
+<main class="w-screen h-screen text-white text-xl select-none">
   <div
     class="flex flex-row items-center justify-evenly font-bold h-[10vh] pb-2 bg-gray-950 ring-2 ring-zinc-500 shadow-xl"
   >

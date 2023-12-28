@@ -3,7 +3,7 @@ let serverUrl: string;
 if (import.meta.env.DEV) {
   serverUrl = "http://localhost:8000";
 } else {
-  serverUrl = "http://reold-cartier.glitch.me";
+  serverUrl = "https://reold-cartier.glitch.me";
 }
 
 export const requests = {
