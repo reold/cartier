@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input {
+  @apply p-2 rounded-md bg-black text-white text-center ring-2 ring-zinc-500 text-base focus:outline-dotted focus:outline-black;
+}
+
+button {
+  @apply bg-[#98C379] text-black p-2 text-base rounded-md duration-200 transition-all;
+}
+
+button:disabled {
+  @apply brightness-150 invert;
+}

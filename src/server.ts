@@ -1,0 +1,30 @@
+let serverUrl: string;
+
+if (import.meta.env.DEV) {
+  serverUrl = "http://localhost:8000";
+} else {
+  serverUrl = "http://reold-cartier.glitch.me";
+}
+
+export const requests = {
+  getUserInfo: async (username: string) => {
+    let resp = await fetch(`${serverUrl}/user?username=${username}`);
+
+    return await resp.json();
+  },
+  getPlaylistInfo: async (id: string) => {
+    let resp = await fetch(`${serverUrl}/playlist?id=${id}`);
+
+    return await resp.json();
+  },
+  getDownloadPlaylist: async (link: string) => {
+    let resp = await fetch(`${serverUrl}/download?link=${link}`);
+
+    return await resp.json();
+  },
+  getStreamPlaylist: async (unique_code: string): Promise<[boolean, Blob]> => {
+    let resp = await fetch(`${serverUrl}/stream?unique_code=${unique_code}`);
+
+    return [await resp.ok, await resp.blob()];
+  },
+};
