@@ -1,6 +1,16 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    const userid = localStorage.getItem("cartier-userid");
+    if (userid) {
+      handleUsername(userid);
+    }
+  });
+
   export let handleUsername: Function;
   let profileLink: string = "";
+  let doPersistId: boolean = true;
 
   const handleUseClipboard = async () => {
     if (navigator.clipboard.readText)
@@ -15,9 +25,13 @@
       profileLink = "";
       return;
     }
-    const username = profileUrl.pathname.split("/")[2];
+    const userid = profileUrl.pathname.split("/")[2];
 
-    handleUsername(username);
+    if (doPersistId) {
+      localStorage.setItem("cartier-userid", userid);
+    }
+
+    handleUsername(userid);
   };
 </script>
 
@@ -50,6 +64,7 @@
         placeholder="spotify profile link"
         bind:value={profileLink}
       />
+
       <button class="bg-zinc-500" on:click={handleUseClipboard}
         ><svg
           xmlns="http://www.w3.org/2000/svg"
@@ -70,5 +85,14 @@
 
     <p class="text-sm">copy your profile link from your spotify account page</p>
   </div>
-  <button class="hover:scale-110" on:click={handleLogin}>continue</button>
+  <div class="flex flex-row items-center justify-center space-x-3">
+    <label
+      for="persisting userid"
+      class="text-base flex flex-row space-x-2 bg-gray-950 p-3 rounded-md"
+    >
+      <input type="checkbox" class="inline" bind:checked={doPersistId} />
+      <span class="align-middle">persist</span>
+    </label>
+    <button class="hover:scale-110" on:click={handleLogin}>continue</button>
+  </div>
 </div>
