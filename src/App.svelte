@@ -14,8 +14,6 @@
 
       $appState = { ...data["data"] };
       $appState["loggedIn"] = true;
-
-      navigator.clipboard.writeText(JSON.stringify($appState));
     });
   };
 </script>
