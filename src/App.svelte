@@ -20,7 +20,7 @@
 
 <main class="w-screen h-screen text-white text-xl select-none">
   <div
-    class="flex flex-row items-center justify-evenly font-bold h-[10vh] pb-2 bg-gray-950 ring-2 ring-zinc-500 shadow-xl"
+    class="flex flex-row items-center justify-evenly font-bold h-[10vh] pb-2 bg-gray-950 ring-1 ring-zinc-500 shadow-xl"
   >
     <div
       class="bg-aodPurple shadow-sm shadow-gray-950 rounded-b-md p-2 ml-2 h-full flex flex-col items-center justify-center"
@@ -30,7 +30,7 @@
     <p class="text-3xl">Cartier Manager</p>
   </div>
   <div
-    class="w-full flex flex-col items-center justify-center h-[85vh] bg-gradient-to-t from-gray-950 via-aodBg to-aodBg"
+    class="w-full flex flex-col items-center justify-center h-[85vh] bg-gradient-to-t from-gray-950 via-[#203A43] to-gray-950"
   >
     {#if $appState["loggedIn"] == false}
       <Login {handleUsername} />

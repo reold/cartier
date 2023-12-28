@@ -36,7 +36,7 @@
 </script>
 
 <div
-  class="flex flex-col items-center text-center justify-center bg-aodFg ring-2 ring-zinc-500 rounded-md w-11/12 py-5 space-y-7 px-5"
+  class="flex flex-col items-center text-center justify-center bg-aodFg ring-1 ring-zinc-500 rounded-md w-11/12 py-5 space-y-7 px-5"
 >
   <p class="text-2xl">
     <svg

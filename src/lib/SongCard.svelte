@@ -2,11 +2,36 @@
   import { tweened } from "svelte/motion";
   import { cubicInOut } from "svelte/easing";
   import { requests } from "../server";
+  import App from "../App.svelte";
 
+  let playlistInfo: object = {};
   let storedBlobs: Blob[] = [];
   export let track: any;
-  let isDownloading = false;
-  let progress = tweened(0, { duration: 100, easing: cubicInOut });
+  const downloadInfo = {
+    is: false,
+    id: "",
+  };
+  let showMore = false;
+  let progress = tweened(0, { duration: 1000, easing: cubicInOut });
+
+  const toggleShowMore = () => {
+    if (showMore == false) {
+      if (Object.keys(playlistInfo).length == 0) loadPlaylistInfo();
+      showMore = true;
+    } else {
+      showMore = false;
+    }
+  };
+
+  const loadPlaylistInfo = () => {
+    const playlistLink = track["external_urls"]["spotify"];
+    const playlistUrl = new URL(playlistLink);
+    const playlistId = playlistUrl.pathname.split("/")[2];
+
+    requests.getPlaylistInfo(playlistId).then((data) => {
+      playlistInfo = data;
+    });
+  };
 
   const handleSave = () => {
     storedBlobs.forEach((blob, bi) => {
@@ -20,65 +45,123 @@
   };
 
   const handleDownloadPlaylist = () => {
-    isDownloading = true;
+    if (Object.keys(playlistInfo).length == 0) loadPlaylistInfo();
+    if (!playlistInfo["tracks"]) return;
 
-    const playlistLink = track["external_urls"]["spotify"];
-    const playlistUrl = new URL(playlistLink);
-    const playlistId = playlistUrl.pathname.split("/")[2];
+    downloadInfo["is"] = true;
 
-    let totalTracks = 0;
+    progress.set(0, { duration: 100 });
+    progress.set(100, { duration: 10_000 });
 
-    progress.set(25, { duration: 10_000 });
+    let fTrack = playlistInfo["tracks"]["items"][0]["track"];
 
-    requests.getPlaylistInfo(playlistId).then((data) => {
-      totalTracks = data["tracks"]["total"];
-      $progress = 25;
-      const eta = totalTracks * 20 + 0.001;
+    requests
+      .getDownloadTrack(fTrack["external_urls"]["spotify"], "", true)
+      .then(async (data) => {
+        if (data["success"] == false) {
+          $progress = 0;
+          downloadInfo["is"] = false;
+          alert(data["info"]);
+          return;
+        }
 
-      if (totalTracks > 20) {
-        alert(
-          `There are ${totalTracks} tracks in the playlist. It will take about ${
-            eta / 60
-          } minutes`
-        );
-      }
+        $progress = (1 / playlistInfo["tracks"]["total"]) * 100;
 
-      progress.set(50, { duration: eta * 1000 });
-      requests.getDownloadPlaylist(playlistLink).then(async (data) => {
-        $progress = 50;
-        progress.set(75, { duration: 10_000 });
-        for (let i = 0; i < totalTracks; i++) {
-          let [ok, blob] = await requests.getStreamPlaylist(
-            data["data"]["unique_code"]
-          );
+        const unique_code = data["data"]["unique_code"];
 
-          $progress = 75 + (i / totalTracks) * 25;
-          if (!ok) {
-            alert("something went wrong");
-            return;
+        for (const [ti, { track }] of playlistInfo["tracks"]["items"]
+          .splice(1)
+          .entries()) {
+          if (track) {
+            downloadInfo["id"] = track["id"];
           }
+          const data = await requests.getDownloadTrack(
+            track["external_urls"]["spotify"],
+            unique_code,
+            false
+          );
+          if (data["success"] == false) {
+            console.log("failed downloading", track["name"]);
+          }
+
+          $progress = ((ti + 2) / playlistInfo["tracks"]["total"]) * 100;
+        }
+
+        await progress.set(100);
+        await progress.set(0, { delay: 500 });
+        progress.set(100, { duration: 10_000 });
+
+        for (let i = 0; i < playlistInfo["tracks"]["total"]; i++) {
+          let [ok, blob] = await requests.getStreamPlaylist(unique_code);
+
+          if (!ok) {
+            console.log("failed streaming", track["name"]);
+            continue;
+          }
+
           storedBlobs = [...storedBlobs, blob];
         }
-        isDownloading = false;
+
+        downloadInfo["is"] = false;
       });
-    });
   };
+
+  // const handleDownloadPlaylist = () => {
+  //   downloadInfo["is"] = true;
+
+  //   progress.set(25, { duration: 10_000 });
+
+  //   if (Object.keys(playlistInfo).length == 0) loadPlaylistInfo();
+  //   const playlistLink = track["external_urls"]["spotify"];
+
+  //   let totalTracks = playlistInfo["tracks"]["total"];
+  //   $progress = 25;
+  //   const eta = totalTracks * 20 + 0.001;
+
+  //   if (totalTracks > 20) {
+  //     alert(
+  //       `There are ${totalTracks} tracks in the playlist. It will take about ${
+  //         eta / 60
+  //       } minutes`
+  //     );
+  //   }
+
+  //   progress.set(50, { duration: eta * 1000 });
+  //   requests.getDownloadPlaylist(playlistLink).then(async (data) => {
+  //     $progress = 50;
+  //     progress.set(75, { duration: 10_000 });
+  //     for (let i = 0; i < totalTracks; i++) {
+  //       let [ok, blob] = await requests.getStreamPlaylist(
+  //         data["data"]["unique_code"]
+  //       );
+
+  //       $progress = 75 + (i / totalTracks) * 25;
+  //       if (!ok) {
+  //         alert("something went wrong");
+  //         return;
+  //       }
+  //       storedBlobs = [...storedBlobs, blob];
+  //     }
+  //     downloadInfo["is"] = false;
+  //   });
+  // };
 </script>
 
 <div
-  class="bg-gray-950 ring-2 ring-zinc-500 p-2 rounded-md w-[90vw] text-center relative"
+  class="bg-gray-950 ring-1 ring-zinc-500 py-2 rounded-md w-[90vw] text-center relative transition-all duration-150"
 >
   <div
     class="h-full absolute backdrop-invert brightness-50 left-0 top-0 rounded-md"
     style="width: {($progress / 100) * 90}vw"
-    hidden={!isDownloading}
+    hidden={!downloadInfo["is"]}
   ></div>
-  <div class="grid grid-cols-3 w-full gap-2 p-2">
-    <div class="col-span-1">
+  <div class="grid grid-cols-4 w-full gap-1">
+    <div class="col-span-1 flex flex-col items-center justify-center">
       {#if track["images"].length > 0}
         <img
+          loading="lazy"
           src={track["images"][0]["url"]}
-          class="rounded-full max-h-[10vh]"
+          class="rounded-full max-h-[10vh] shadow-black shadow-lg ring-1 ring-black"
           alt="playlist's cover"
         />
       {:else}
@@ -98,7 +181,7 @@
         </svg>
       {/if}
     </div>
-    <div class="col-span-2 flex flex-col justify-center items-start">
+    <div class="col-span-3 flex flex-col justify-center items-start">
       <a
         class="hover:scale-110 duration-75 text-left line-clamp-1"
         href={track["external_urls"]["spotify"]}
@@ -122,13 +205,49 @@
       <p class="text-xs line-clamp-1">
         {track["description"]}
       </p>
-      <div>
+      <div class="flex flex-row space-x-2">
         <button
-          class="text-xs bg-aodPurple"
-          disabled={isDownloading || storedBlobs.length > 0}
+          class="bg-transparent text-white ring-1 p-1 ring-zinc-500"
+          on:click={toggleShowMore}
+        >
+          {#if showMore}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="3"
+              stroke="currentColor"
+              class="w-[1.2em] aspect-square text-xs"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              />
+            </svg>
+          {:else}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="4"
+              stroke="currentColor"
+              class="w-[1.2em] text-xs aspect-square"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+              />
+            </svg>
+          {/if}
+        </button>
+        <button
+          class="text-xs bg-aodPurple p-1"
+          disabled={downloadInfo["is"] || storedBlobs.length > 0}
           on:click={handleDownloadPlaylist}
         >
-          {#if isDownloading}
+          {#if downloadInfo["is"]}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -150,10 +269,57 @@
             download
           {/if}
         </button>
-        {#if storedBlobs.length > 0 && !isDownloading}
-          <button class="text-xs" on:click={handleSave}>save</button>
+        {#if storedBlobs.length > 0 && !downloadInfo["is"]}
+          <button class="text-xs p-1" on:click={handleSave}>save</button>
         {/if}
       </div>
     </div>
+    {#if showMore && Object.keys(playlistInfo).length > 0}
+      <div
+        class="col-span-4 bg-zinc-500/10 rounded-md mx-2 text-xs
+        flex flex-row justify-center"
+      >
+        <div
+          class="overflow-hidden overflow-x-scroll flex flex-row items-center space-x-2 p-1 relative"
+        >
+          <div class="bg-zinc-950 rounded-full text-white p-2">
+            {playlistInfo["tracks"]["total"]} tracks
+          </div>
+          {#each playlistInfo["tracks"]["items"] as track}
+            {#if track["track"]}
+              <img
+                loading="lazy"
+                src={track["track"]["album"]["images"][0]["url"]}
+                class="aspect-square h-[5vh] rounded-full ring-1 ring-black shadow-md shadow-black {track[
+                  'track'
+                ]['id'] == downloadInfo['id'] && downloadInfo['is']
+                  ? 'animate-spin'
+                  : ''}"
+                alt="album"
+              />
+            {:else}
+              <div
+                class="ring-1 ring-black shadow-md shadow-black rounded-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-[5vh] h-[5vh]"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+              </div>
+            {/if}
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
