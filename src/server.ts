@@ -7,6 +7,11 @@ if (import.meta.env.DEV) {
 }
 
 export const requests = {
+  getRoot: async () => {
+    let resp = await fetch(`${serverUrl}/`);
+
+    return await resp.json();
+  },
   getUserInfo: async (username: string) => {
     let resp = await fetch(`${serverUrl}/user?username=${username}`);
 

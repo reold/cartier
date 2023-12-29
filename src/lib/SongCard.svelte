@@ -2,9 +2,13 @@
   import { tweened } from "svelte/motion";
   import { cubicInOut } from "svelte/easing";
   import { requests } from "../server";
-  import App from "../App.svelte";
+  import { notify } from "../App.svelte";
 
-  let playlistInfo: object = {};
+  interface Playlist {
+    tracks: { items: any[]; total: number };
+  }
+
+  let playlistInfo: Playlist = {} as Playlist;
   let storedBlobs: Blob[] = [];
   export let track: any;
   const downloadInfo = {
@@ -23,14 +27,15 @@
     }
   };
 
-  const loadPlaylistInfo = () => {
+  const loadPlaylistInfo = async () => {
     const playlistLink = track["external_urls"]["spotify"];
     const playlistUrl = new URL(playlistLink);
     const playlistId = playlistUrl.pathname.split("/")[2];
 
-    requests.getPlaylistInfo(playlistId).then((data) => {
-      playlistInfo = data;
-    });
+    notify("loading playlist info", true, 1);
+
+    let data = await requests.getPlaylistInfo(playlistId);
+    playlistInfo = data;
   };
 
   const handleSave = () => {
@@ -44,9 +49,15 @@
     });
   };
 
-  const handleDownloadPlaylist = () => {
-    if (Object.keys(playlistInfo).length == 0) loadPlaylistInfo();
+  const handleDownloadPlaylist = async () => {
+    if (Object.keys(playlistInfo).length == 0) await loadPlaylistInfo();
+
     if (!playlistInfo["tracks"]) return;
+
+    if (playlistInfo["tracks"]["items"].length == 0) {
+      notify("nothing to download");
+      return;
+    }
 
     downloadInfo["is"] = true;
 
@@ -61,7 +72,7 @@
         if (data["success"] == false) {
           $progress = 0;
           downloadInfo["is"] = false;
-          alert(data["info"]);
+          notify(`serverErr: ${data["info"]}`);
           return;
         }
 
@@ -81,7 +92,7 @@
             false
           );
           if (data["success"] == false) {
-            console.log("failed downloading", track["name"]);
+            notify(`failed downloading track (${track["name"]})`);
           }
 
           $progress = ((ti + 2) / playlistInfo["tracks"]["total"]) * 100;
@@ -95,7 +106,7 @@
           let [ok, blob] = await requests.getStreamPlaylist(unique_code);
 
           if (!ok) {
-            console.log("failed streaming", track["name"]);
+            notify(`failed streaming track (${track["name"]})`);
             continue;
           }
 
@@ -105,46 +116,6 @@
         downloadInfo["is"] = false;
       });
   };
-
-  // const handleDownloadPlaylist = () => {
-  //   downloadInfo["is"] = true;
-
-  //   progress.set(25, { duration: 10_000 });
-
-  //   if (Object.keys(playlistInfo).length == 0) loadPlaylistInfo();
-  //   const playlistLink = track["external_urls"]["spotify"];
-
-  //   let totalTracks = playlistInfo["tracks"]["total"];
-  //   $progress = 25;
-  //   const eta = totalTracks * 20 + 0.001;
-
-  //   if (totalTracks > 20) {
-  //     alert(
-  //       `There are ${totalTracks} tracks in the playlist. It will take about ${
-  //         eta / 60
-  //       } minutes`
-  //     );
-  //   }
-
-  //   progress.set(50, { duration: eta * 1000 });
-  //   requests.getDownloadPlaylist(playlistLink).then(async (data) => {
-  //     $progress = 50;
-  //     progress.set(75, { duration: 10_000 });
-  //     for (let i = 0; i < totalTracks; i++) {
-  //       let [ok, blob] = await requests.getStreamPlaylist(
-  //         data["data"]["unique_code"]
-  //       );
-
-  //       $progress = 75 + (i / totalTracks) * 25;
-  //       if (!ok) {
-  //         alert("something went wrong");
-  //         return;
-  //       }
-  //       storedBlobs = [...storedBlobs, blob];
-  //     }
-  //     downloadInfo["is"] = false;
-  //   });
-  // };
 </script>
 
 <div

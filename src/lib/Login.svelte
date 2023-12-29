@@ -1,9 +1,13 @@
 <script lang="ts">
+  import WakeUp from "./WakeUp.svelte";
+
   import { onMount } from "svelte";
+  import { notify } from "../App.svelte";
 
   onMount(() => {
     const userid = localStorage.getItem("cartier-userid");
     if (userid) {
+      notify("performing auto-login", true);
       handleUsername(userid);
     }
   });
@@ -29,12 +33,14 @@
 
     if (doPersistId) {
       localStorage.setItem("cartier-userid", userid);
+      notify("login information saved!");
     }
 
     handleUsername(userid);
   };
 </script>
 
+<WakeUp />
 <div
   class="flex flex-col items-center text-center justify-center bg-aodFg ring-1 ring-zinc-500 rounded-md w-11/12 py-5 space-y-7 px-5"
 >
