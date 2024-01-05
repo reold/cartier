@@ -55,14 +55,14 @@
     if (!playlistInfo["tracks"]) return;
 
     if (playlistInfo["tracks"]["items"].length == 0) {
-      notify("nothing to download");
+      notify("cannot download empty playlist");
       return;
     }
 
     downloadInfo["is"] = true;
 
-    progress.set(0, { duration: 100 });
-    progress.set(100, { duration: 10_000 });
+    progress.set(0, { duration: 1 });
+    progress.set(10, { duration: 10_000 });
 
     let fTrack = playlistInfo["tracks"]["items"][0]["track"];
 
@@ -76,9 +76,7 @@
           return;
         }
 
-        $progress = (1 / playlistInfo["tracks"]["total"]) * 100;
-
-        const unique_code = data["data"]["unique_code"];
+        const key = data["data"]["key"];
 
         for (const [ti, { track }] of playlistInfo["tracks"]["items"]
           .splice(1)
@@ -88,32 +86,45 @@
           }
           const data = await requests.getDownloadTrack(
             track["external_urls"]["spotify"],
-            unique_code,
+            key,
             false
           );
           if (data["success"] == false) {
             notify(`failed downloading track (${track["name"]})`);
           }
-
-          $progress = ((ti + 2) / playlistInfo["tracks"]["total"]) * 100;
         }
 
-        await progress.set(100);
-        await progress.set(0, { delay: 500 });
-        progress.set(100, { duration: 10_000 });
+        await progress.set(10);
 
-        for (let i = 0; i < playlistInfo["tracks"]["total"]; i++) {
-          let [ok, blob] = await requests.getStreamPlaylist(unique_code);
+        const refreshIntervalId = setInterval(async () => {
+          let data = await requests.getDownloadStatus(key);
 
-          if (!ok) {
-            notify(`failed streaming track (${track["name"]})`);
-            continue;
+          const readyTracks = data["data"].filter(
+            (track) => track["status"] === "ready"
+          );
+
+          $progress = (readyTracks.length / data["data"].length) * 40 + 10;
+
+          if (readyTracks.length == data["data"].length) {
+            clearInterval(refreshIntervalId);
+
+            for (let i = 0; i < readyTracks.length; i++) {
+              let [ok, blob] = await requests.getStreamPlaylist(key);
+
+              if (!ok) {
+                notify(`failed streaming track (${track["name"]})`);
+                continue;
+              }
+
+              storedBlobs = [...storedBlobs, blob];
+              $progress = ((i + 1) / readyTracks.length) * 50 + 50;
+            }
+            await progress.set(100, { duration: 500 });
+            downloadInfo["is"] = false;
           }
+        }, 2500);
 
-          storedBlobs = [...storedBlobs, blob];
-        }
-
-        downloadInfo["is"] = false;
+        // downloadInfo["is"] = false;
       });
   };
 </script>

@@ -60,6 +60,10 @@
       <span>reold's</span>
     </div>
     <p class="text-3xl">Cartier Manager</p>
+    <span
+      class="font-bold text-red-500 p-0.5 bg-black uppercase text-xs absolute top-0 left-0"
+      >inactive client</span
+    >
   </div>
   <div
     class="relative w-full flex flex-col items-center justify-center h-[85vh] bg-gradient-to-t from-gray-950 via-[#203A43] to-gray-950"

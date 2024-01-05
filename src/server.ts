@@ -27,19 +27,24 @@ export const requests = {
 
     return await resp.json();
   },
+  getDownloadStatus: async (id: string) => {
+    let resp = await fetch(`${serverUrl}/status?key=${id}`);
+
+    return await resp.json();
+  },
   getDownloadTrack: async (
     link: string,
-    unique_code: string = "",
+    key: string = "",
     create: boolean = false
   ) => {
     let resp = await fetch(
-      `${serverUrl}/track?link=${link}&unique_code=${unique_code}&create=${create}`
+      `${serverUrl}/track?link=${link}&key=${key}&create=${create}`
     );
 
     return await resp.json();
   },
-  getStreamPlaylist: async (unique_code: string): Promise<[boolean, Blob]> => {
-    let resp = await fetch(`${serverUrl}/stream?unique_code=${unique_code}`);
+  getStreamPlaylist: async (key: string): Promise<[boolean, Blob]> => {
+    let resp = await fetch(`${serverUrl}/stream?key=${key}`);
 
     return [await resp.ok, await resp.blob()];
   },
