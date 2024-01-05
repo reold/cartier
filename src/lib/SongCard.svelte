@@ -13,7 +13,7 @@
   export let track: any;
   const downloadInfo = {
     is: false,
-    id: "",
+    statuses: {} as { [id: string]: string },
   };
   let showMore = false;
   let progress = tweened(0, { duration: 1000, easing: cubicInOut });
@@ -78,11 +78,11 @@
 
         const key = data["data"]["key"];
 
-        for (const [ti, { track }] of playlistInfo["tracks"]["items"]
+        for (const [ti, { track }] of [...playlistInfo["tracks"]["items"]]
           .splice(1)
           .entries()) {
           if (track) {
-            downloadInfo["id"] = track["id"];
+            downloadInfo["statuses"][track["id"]] = "downloading";
           }
           const data = await requests.getDownloadTrack(
             track["external_urls"]["spotify"],
@@ -100,8 +100,13 @@
           let data = await requests.getDownloadStatus(key);
 
           const readyTracks = data["data"].filter(
-            (track) => track["status"] === "ready"
+            (track: { status: string; id: string }) =>
+              track["status"] === "ready"
           );
+
+          data["data"].forEach((track: { status: string; id: string }) => {
+            downloadInfo["statuses"][track["id"]] = track["status"];
+          });
 
           $progress = (readyTracks.length / data["data"].length) * 40 + 10;
 
@@ -122,9 +127,7 @@
             await progress.set(100, { duration: 500 });
             downloadInfo["is"] = false;
           }
-        }, 2500);
-
-        // downloadInfo["is"] = false;
+        }, 5000);
       });
   };
 </script>
@@ -272,10 +275,14 @@
               <img
                 loading="lazy"
                 src={track["track"]["album"]["images"][0]["url"]}
-                class="aspect-square h-[5vh] rounded-full ring-1 ring-black shadow-md shadow-black {track[
-                  'track'
-                ]['id'] == downloadInfo['id'] && downloadInfo['is']
-                  ? 'animate-spin'
+                class="aspect-square h-[5vh] rounded-full ring-1 ring-black shadow-sm shadow-black
+                {downloadInfo['is'] &&
+                downloadInfo['statuses'][track['track']['id']] == 'downloading'
+                  ? 'rotating-image will-change-auto'
+                  : ''}
+                  {downloadInfo['is'] &&
+                downloadInfo['statuses'][track['track']['id']] == 'ready'
+                  ? 'shadow-green-500 ring-green-500'
                   : ''}"
                 alt="album"
               />

@@ -21,3 +21,16 @@ button {
 button:disabled {
   @apply brightness-150 invert;
 }
+
+.rotating-image {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg) scale(0.75);
+  }
+  to {
+    transform: rotate(360deg) scale(0.75);
+  }
+}
