@@ -10,7 +10,7 @@
 
 <div class="flex flex-col items-center -space-y-1">
   <div
-    class="flex flex-row justify-center items-center h-[13vh] space-x-4 bg-gradient-to-t from-gray-950 via-zinc-500 to-zinc-500 w-[90vw] rounded-t-xl ring-1 ring-zinc-500"
+    class="flex flex-row justify-center items-center h-[13vh] space-x-4 bg-gradient-to-t from-gray-950/50 backdrop-blur-sm to-zinc-500 w-[90vw] rounded-t-md ring-1 ring-zinc-500 z-50"
   >
     <div class="flex flex-row items-center justify-center space-x-5">
       {#if $appState["user"]["images"].length == 2}
@@ -18,7 +18,7 @@
           loading="lazy"
           src={$appState["user"]["images"][1]["url"]}
           alt={`${$appState["user"]["display_name"]}'s profile picture`}
-          class="rounded-full h-[10vh] ring-aodBg ring-2 shadow-md shadow-black"
+          class="rounded-full h-[10vh] ring-aodBg ring-1 shadow-sm shadow-black"
         />
       {:else}
         <svg
@@ -54,7 +54,8 @@
     </div>
     <div>
       <button
-        class="text-sm p-0.5 bg-red-500 text-white"
+        class="text-sm p-0.5 bg-red-500 text-gray-950"
+        aria-label="logout"
         on:click={handleLogout}
         ><svg
           xmlns="http://www.w3.org/2000/svg"
@@ -83,4 +84,7 @@
       {/each}
     </div>
   </div>
+  <div
+    class="backdrop-opacity-100 rounded-full backdrop-blur-sm w-[95vw] h-7 absolute bottom-0 left-auto right-auto"
+  />
 </div>

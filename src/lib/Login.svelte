@@ -71,7 +71,10 @@
         bind:value={profileLink}
       />
 
-      <button class="bg-zinc-500" on:click={handleUseClipboard}
+      <button
+        class="bg-zinc-500"
+        on:click={handleUseClipboard}
+        aria-label="paste from clipboard"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"

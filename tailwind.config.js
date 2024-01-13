@@ -3,7 +3,8 @@ export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
     fontFamily: {
-      sans: "Nunito"
+      sans: ["nunito", "ubuntu", "monospace"],
+      mono: ["monospace"]
     },
     extend: {
       colors: {

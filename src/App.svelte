@@ -55,7 +55,7 @@
     class="flex flex-row items-center justify-evenly font-bold h-[10vh] pb-2 bg-gray-950 ring-1 ring-zinc-500 shadow-xl"
   >
     <div
-      class="bg-aodPurple shadow-sm shadow-gray-950 rounded-b-md p-2 ml-2 h-full flex flex-col items-center justify-center"
+      class="bg-aodPurple shadow-sm text-gray-950 shadow-gray-950 rounded-b-md p-2 ml-2 h-full flex flex-col items-center justify-center"
     >
       <span>reold's</span>
     </div>

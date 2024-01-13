@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "nunito";
+  src: url("./assets/fonts/nunito.ttf") format("truetype");
+  font-weight: normal;
+  font-size: normal;
+
+  font-display: swap;
+}
+
+a {
+  @apply font-bold;
+}
+
+@font-face {
+  font-family: "nunito";
+  src: url("./assets/fonts/nunito-italic.ttf") format("truetype");
+  font-weight: normal;
+  font-size: normal;
+
+  font-display: swap;
+
+  font-style: italic;
+}
+
 * {
   @apply accent-aodPurple;
 }
@@ -28,9 +52,9 @@ button:disabled {
 
 @keyframes spin {
   from {
-    transform: rotate(0deg) scale(0.75);
+    transform: rotate(0deg) scale(0.85);
   }
   to {
-    transform: rotate(360deg) scale(0.75);
+    transform: rotate(360deg) scale(0.85);
   }
 }

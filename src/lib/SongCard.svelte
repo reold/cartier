@@ -14,6 +14,7 @@
   const downloadInfo = {
     is: false,
     statuses: {} as { [id: string]: string },
+    stage: "",
   };
   let showMore = false;
   let progress = tweened(0, { duration: 1000, easing: cubicInOut });
@@ -60,6 +61,7 @@
     }
 
     downloadInfo["is"] = true;
+    downloadInfo["stage"] = "converting";
 
     progress.set(0, { duration: 1 });
     progress.set(10, { duration: 10_000 });
@@ -99,30 +101,31 @@
         const refreshIntervalId = setInterval(async () => {
           let data = await requests.getDownloadStatus(key);
 
-          const readyTracks = data["data"].filter(
+          const convertedTracks = data["data"].filter(
             (track: { status: string; id: string }) =>
-              track["status"] === "ready"
+              track["status"] !== "downloading"
           );
 
           data["data"].forEach((track: { status: string; id: string }) => {
             downloadInfo["statuses"][track["id"]] = track["status"];
           });
 
-          $progress = (readyTracks.length / data["data"].length) * 40 + 10;
+          $progress = (convertedTracks.length / data["data"].length) * 40 + 10;
 
-          if (readyTracks.length == data["data"].length) {
+          if (convertedTracks.length == data["data"].length) {
+            downloadInfo["stage"] = "downloading";
             clearInterval(refreshIntervalId);
 
-            for (let i = 0; i < readyTracks.length; i++) {
+            for (let i = 0; i < convertedTracks.length; i++) {
               let [ok, blob] = await requests.getStreamPlaylist(key);
 
               if (!ok) {
-                notify(`failed streaming track (${track["name"]})`);
+                notify(`failed downloading a track (in "${track["name"]}")`);
                 continue;
               }
 
               storedBlobs = [...storedBlobs, blob];
-              $progress = ((i + 1) / readyTracks.length) * 50 + 50;
+              $progress = ((i + 1) / convertedTracks.length) * 50 + 50;
             }
             await progress.set(100, { duration: 500 });
             downloadInfo["is"] = false;
@@ -133,10 +136,10 @@
 </script>
 
 <div
-  class="bg-gray-950 ring-1 ring-zinc-500 py-2 rounded-md w-[90vw] text-center relative transition-all duration-150"
+  class="bg-gray-950/50 ring-1 ring-zinc-500 py-2 rounded-md w-[90vw] text-center relative transition-all duration-150"
 >
   <div
-    class="h-full absolute backdrop-invert brightness-50 left-0 top-0 rounded-md"
+    class="h-1 absolute backdrop-opacity-50 bg-aodPurple rounded-sm left-0 bottom-0 z-50"
     style="width: {($progress / 100) * 90}vw"
     hidden={!downloadInfo["is"]}
   ></div>
@@ -192,7 +195,8 @@
       </p>
       <div class="flex flex-row space-x-2">
         <button
-          class="bg-transparent text-white ring-1 p-1 ring-zinc-500"
+          class="bg-transparent text-white ring-1 p-1 ring-zinc-500 hover:scale-110"
+          aria-label="show more"
           on:click={toggleShowMore}
         >
           {#if showMore}
@@ -247,7 +251,11 @@
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
               />
             </svg>
-            downloading
+            {#if downloadInfo["stage"] == "downloading"}
+              downloading
+            {:else}
+              converting
+            {/if}
           {:else if storedBlobs.length > 0}
             downloaded
           {:else}
@@ -271,19 +279,25 @@
             {playlistInfo["tracks"]["total"]} tracks
           </div>
           {#each playlistInfo["tracks"]["items"] as track}
-            {#if track["track"]}
+            {#if track["track"] && track["track"]["album"]["images"].length > 0}
               <img
                 loading="lazy"
                 src={track["track"]["album"]["images"][0]["url"]}
-                class="aspect-square h-[5vh] rounded-full ring-1 ring-black shadow-sm shadow-black
-                {downloadInfo['is'] &&
-                downloadInfo['statuses'][track['track']['id']] == 'downloading'
-                  ? 'rotating-image will-change-auto'
+                class="aspect-square h-[5vh] rounded-full ring-1 ring-black shadow-sm shadow-black will-change-auto
+                {downloadInfo['is']
+                  ? (downloadInfo['statuses'][track['track']['id']] ==
+                    'downloading'
+                      ? ' rotating-image'
+                      : '') +
+                    (downloadInfo['statuses'][track['track']['id']] == 'ready'
+                      ? ' shadow-green-500 ring-green-500'
+                      : '') +
+                    (downloadInfo['statuses'][track['track']['id']] == 'failed'
+                      ? ' shadow-red-500 ring-red-500'
+                      : '')
                   : ''}
-                  {downloadInfo['is'] &&
-                downloadInfo['statuses'][track['track']['id']] == 'ready'
-                  ? 'shadow-green-500 ring-green-500'
-                  : ''}"
+                
+                "
                 alt="album"
               />
             {:else}
