@@ -31,11 +31,11 @@ a {
 }
 
 input[type="text"] {
-  @apply p-2 rounded-md bg-black text-white text-center ring-2 ring-zinc-500 text-base focus:outline-dotted focus:outline-black;
+  @apply p-2 rounded-md bg-black text-white text-center ring-1 ring-zinc-500 text-base focus:outline-dotted focus:outline-black;
 }
 
 input[type="checkbox"] {
-  @apply w-5 aspect-square;
+  @apply w-5 aspect-square mt-auto;
 }
 
 button {

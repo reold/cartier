@@ -1,34 +1,36 @@
-let serverUrl: string;
-
 if (import.meta.env.DEV) {
-  serverUrl = "http://localhost:8000";
+  window["cartier-server-url"] = "http://localhost:8000" as string;
 } else {
-  serverUrl = "https://reold-cartier.glitch.me";
+  window["cartier-server-url"] = "https://reold-cartier.glitch.me" as string;
 }
 
 export const requests = {
   getRoot: async () => {
-    let resp = await fetch(`${serverUrl}/`);
+    let resp = await fetch(`${window["cartier-server-url"]}/`);
 
     return await resp.json();
   },
   getUserInfo: async (username: string) => {
-    let resp = await fetch(`${serverUrl}/user?username=${username}`);
+    let resp = await fetch(
+      `${window["cartier-server-url"]}/user?username=${username}`
+    );
 
     return await resp.json();
   },
   getPlaylistInfo: async (id: string) => {
-    let resp = await fetch(`${serverUrl}/playlist?id=${id}`);
+    let resp = await fetch(`${window["cartier-server-url"]}/playlist?id=${id}`);
 
     return await resp.json();
   },
   getDownloadPlaylist: async (link: string) => {
-    let resp = await fetch(`${serverUrl}/download?link=${link}`);
+    let resp = await fetch(
+      `${window["cartier-server-url"]}/download?link=${link}`
+    );
 
     return await resp.json();
   },
   getDownloadStatus: async (id: string) => {
-    let resp = await fetch(`${serverUrl}/status?key=${id}`);
+    let resp = await fetch(`${window["cartier-server-url"]}/status?key=${id}`);
 
     return await resp.json();
   },
@@ -38,13 +40,13 @@ export const requests = {
     create: boolean = false
   ) => {
     let resp = await fetch(
-      `${serverUrl}/track?link=${link}&key=${key}&create=${create}`
+      `${window["cartier-server-url"]}/track?link=${link}&key=${key}&create=${create}`
     );
 
     return await resp.json();
   },
   getStreamPlaylist: async (key: string): Promise<[boolean, Blob]> => {
-    let resp = await fetch(`${serverUrl}/stream?key=${key}`);
+    let resp = await fetch(`${window["cartier-server-url"]}/stream?key=${key}`);
 
     return [await resp.ok, await resp.blob()];
   },

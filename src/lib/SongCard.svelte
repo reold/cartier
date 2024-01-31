@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tweened } from "svelte/motion";
+  import { slide } from "svelte/transition";
   import { cubicInOut } from "svelte/easing";
   import { requests } from "../server";
   import { notify } from "../App.svelte";
@@ -79,6 +80,7 @@
         }
 
         const key = data["data"]["key"];
+        downloadInfo["statuses"][fTrack["id"]] = "downloading";
 
         for (const [ti, { track }] of [...playlistInfo["tracks"]["items"]]
           .splice(1)
@@ -136,7 +138,7 @@
 </script>
 
 <div
-  class="bg-gray-950/50 ring-1 ring-zinc-500 py-2 rounded-md w-[90vw] text-center relative transition-all duration-150"
+  class="bg-gray-950/50 ring-1 ring-zinc-500 py-2 rounded-md w-[90vw] text-center relative"
 >
   <div
     class="h-1 absolute backdrop-opacity-50 bg-aodPurple rounded-sm left-0 bottom-0 z-50"
@@ -271,6 +273,7 @@
       <div
         class="col-span-4 bg-zinc-500/10 rounded-md mx-2 text-xs
         flex flex-row justify-center"
+        transition:slide={{ duration: 250 }}
       >
         <div
           class="overflow-hidden overflow-x-scroll flex flex-row items-center space-x-2 p-1 relative"

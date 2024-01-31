@@ -1,5 +1,6 @@
 <script lang="ts">
   import SongCard from "./SongCard.svelte";
+  import { slide } from "svelte/transition";
   import { appState } from "../store";
 
   const handleLogout = () => {
@@ -18,7 +19,7 @@
           loading="lazy"
           src={$appState["user"]["images"][1]["url"]}
           alt={`${$appState["user"]["display_name"]}'s profile picture`}
-          class="rounded-full h-[10vh] ring-aodBg ring-1 shadow-sm shadow-black"
+          class="rounded-full h-[10vh] ring-aodBg ring-1 shadow-sm shadow-black aspect-square"
         />
       {:else}
         <svg
@@ -75,9 +76,10 @@
     </div>
   </div>
 
-  <div class="h-[67vh] overflow-y-scroll w-[100vw]">
+  <div class="h-[70vh] overflow-y-scroll w-[100vw]">
     <div
       class="flex flex-col justify-center items-center w-full space-y-2 pb-1"
+      transition:slide={{ duration: 1000 }}
     >
       {#each $appState["playlists"]["items"] as track}
         <SongCard {track} />
@@ -85,6 +87,6 @@
     </div>
   </div>
   <div
-    class="backdrop-opacity-100 rounded-full backdrop-blur-sm w-[95vw] h-7 absolute bottom-0 left-auto right-auto"
+    class="backdrop-opacity-100 rounded-full backdrop-blur-sm w-[95vw] h-5 absolute bottom-0 left-auto right-auto"
   />
 </div>
