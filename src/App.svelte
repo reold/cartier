@@ -5,7 +5,8 @@
   export const notify = (
     message: string,
     loading: boolean = false,
-    duration: number = 3
+    duration: number = 3,
+    destroyHandler?: ((destroy: () => void) => void) | undefined
   ) => {
     const newNotify: HTMLDivElement = notifyDummy.cloneNode(
       true
@@ -18,9 +19,15 @@
 
     notifyEle.appendChild(newNotify);
 
-    setTimeout(() => {
-      notifyEle.removeChild(newNotify);
-    }, duration * 1000);
+    if (destroyHandler) {
+      destroyHandler(() => {
+        notifyEle.removeChild(newNotify);
+      });
+    } else {
+      setTimeout(() => {
+        notifyEle.removeChild(newNotify);
+      }, duration * 1000);
+    }
   };
 </script>
 
@@ -33,7 +40,10 @@
 
   import { appState } from "./store";
 
-  const handleUsername = (username: string) => {
+  const handleUsername = (
+    username: string,
+    callback?: () => void | undefined
+  ) => {
     requests.getUserInfo(username).then((data) => {
       if (data["success"] == false) {
         notify("something went wrong!");
@@ -42,6 +52,8 @@
 
       $appState = { ...$appState, ...data["data"] };
       $appState["loggedIn"] = true;
+
+      if (callback) callback();
     });
   };
 </script>
@@ -100,9 +112,16 @@
             target.disabled = true;
             target.innerText = "using render";
           }
-          notify("switching & waking alternate (render)server", true);
-          await requests.getRoot();
-          notify("(render)server running");
+          notify(
+            "switching & waking alternate (render)server",
+            true,
+            5,
+            async (destroy) => {
+              await requests.getRoot();
+              destroy();
+              notify("(render)server running");
+            }
+          );
         }}
         ><svg
           xmlns="http://www.w3.org/2000/svg"

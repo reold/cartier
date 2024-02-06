@@ -34,10 +34,12 @@
     const playlistUrl = new URL(playlistLink);
     const playlistId = playlistUrl.pathname.split("/")[2];
 
-    notify("loading playlist info", true, 1);
+    notify("loading playlist info", true, 1, async (destroy) => {
+      let data = await requests.getPlaylistInfo(playlistId);
+      playlistInfo = data;
 
-    let data = await requests.getPlaylistInfo(playlistId);
-    playlistInfo = data;
+      destroy();
+    });
   };
 
   const handleSave = () => {

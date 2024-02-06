@@ -6,9 +6,13 @@
 
   onMount(() => {
     const userid = localStorage.getItem("cartier-userid");
+    console.log("performing auto login");
     if (userid) {
-      notify("performing auto-login", true);
-      handleUsername(userid);
+      notify("performing auto-login", true, 5, (destroy) => {
+        handleUsername(userid, () => {
+          destroy();
+        });
+      });
     }
   });
 
