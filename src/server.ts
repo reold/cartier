@@ -48,13 +48,6 @@ export const requests = {
   getStreamPlaylist: async (key: string): Promise<[boolean, Blob, string]> => {
     let resp = await fetch(`${window["cartier-server-url"]}/stream?key=${key}`);
 
-    await resp;
-
-    console.log("HEADERS");
-    resp.headers.forEach((val, name) => {
-      console.log(name, " : ", val);
-    });
-
     return [
       await resp.ok,
       await resp.blob(),

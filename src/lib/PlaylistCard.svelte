@@ -71,6 +71,8 @@
 
     let fTrack = playlistInfo["tracks"]["items"][0]["track"];
 
+    // add first song for downloading
+    // and getting unique container id for tracking
     requests
       .getDownloadTrack(fTrack["external_urls"]["spotify"], "", true)
       .then(async (data) => {
@@ -84,6 +86,7 @@
         const key = data["data"]["key"];
         downloadInfo["statuses"][fTrack["id"]] = "downloading";
 
+        // add remaining songs for downloading
         for (const [ti, { track }] of [...playlistInfo["tracks"]["items"]]
           .splice(1)
           .entries()) {
@@ -102,6 +105,7 @@
 
         await progress.set(10);
 
+        // poll server for download status of songs
         const refreshIntervalId = setInterval(async () => {
           let data = await requests.getDownloadStatus(key);
 
@@ -116,6 +120,8 @@
 
           $progress = (convertedTracks.length / data["data"].length) * 40 + 10;
 
+          // download songs from server
+          // when conversion is complete
           if (convertedTracks.length == data["data"].length) {
             downloadInfo["stage"] = "downloading";
             clearInterval(refreshIntervalId);
@@ -134,7 +140,7 @@
             await progress.set(100, { duration: 500 });
             downloadInfo["is"] = false;
           }
-        }, 5000);
+        }, 7500);
       });
   };
 </script>
