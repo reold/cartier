@@ -42,6 +42,7 @@
     });
   };
 
+  // save blobs in memory to user fs
   const handleSave = () => {
     storedBlobs.forEach(({ blob, trackid }, bi) => {
       const blobUrl = URL.createObjectURL(blob);
@@ -52,6 +53,18 @@
       a.click();
     });
   };
+
+  // save blobs in memory to OPFS
+  // const handleSave = () => {
+  //   storedBlobs.forEach(({ blob, trackid }, bi) => {
+  //     const blobUrl = URL.createObjectURL(blob);
+
+  //     const a = document.createElement("a");
+  //     a.href = blobUrl;
+  //     a.download = `${trackid}.mp3`;
+  //     a.click();
+  //   });
+  // };
 
   const handleDownloadPlaylist = async () => {
     if (Object.keys(playlistInfo).length == 0) await loadPlaylistInfo();
@@ -134,6 +147,7 @@
                 continue;
               }
 
+              // store song as blob in memory
               storedBlobs = [...storedBlobs, { blob, trackid }];
               $progress = ((i + 1) / convertedTracks.length) * 50 + 50;
             }

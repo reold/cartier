@@ -7,7 +7,7 @@
 
   import DotSVG from "../svg/Dot.svelte";
 
-  let openSettings: boolean = true;
+  let openSettings: boolean = false;
 
   const handleLogout = () => {
     localStorage.removeItem("cartier-userid");
