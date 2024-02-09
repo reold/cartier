@@ -7,6 +7,7 @@
 
   interface PlaylistInfo {
     tracks: { items: any[]; total: number };
+    id: string;
   }
 
   let playlistInfo: PlaylistInfo = {} as PlaylistInfo;
@@ -43,7 +44,7 @@
   };
 
   // save blobs in memory to user fs
-  const handleSave = () => {
+  const handleSaveFs = () => {
     storedBlobs.forEach(({ blob, trackid }, bi) => {
       const blobUrl = URL.createObjectURL(blob);
 
@@ -55,16 +56,50 @@
   };
 
   // save blobs in memory to OPFS
-  // const handleSave = () => {
-  //   storedBlobs.forEach(({ blob, trackid }, bi) => {
-  //     const blobUrl = URL.createObjectURL(blob);
+  const handleSave = async () => {
+    const root = await navigator.storage.getDirectory();
+    const tracksDir = await root.getDirectoryHandle("tracks", {
+      create: true,
+    });
 
-  //     const a = document.createElement("a");
-  //     a.href = blobUrl;
-  //     a.download = `${trackid}.mp3`;
-  //     a.click();
-  //   });
-  // };
+    const cartierFile = await root.getFileHandle("cartier.json", {
+      create: true,
+    });
+
+    storedBlobs.forEach(async ({ blob, trackid }) => {
+      const track = await tracksDir.getFileHandle(`${trackid}.mp3`, {
+        create: true,
+      });
+
+      const writable = await track.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    });
+
+    const readableCF = await cartierFile.getFile();
+    let objCF = JSON.parse(await readableCF.text());
+
+    const writableCF = await cartierFile.createWritable();
+
+    objCF["playlists"] = [
+      ...objCF["playlists"],
+      {
+        name: playlist["name"],
+        url: playlist["external_urls"]["spotify"],
+        desc: playlist["description"],
+        owner: playlist["owner"]["display_name"],
+        tracks: [
+          ...playlistInfo["tracks"]["items"].map(
+            (track) => track["track"]["id"]
+          ),
+        ],
+        id: playlistInfo["id"],
+      },
+    ];
+
+    writableCF.write(JSON.stringify(objCF));
+    writableCF.close();
+  };
 
   const handleDownloadPlaylist = async () => {
     if (Object.keys(playlistInfo).length == 0) await loadPlaylistInfo();
@@ -288,6 +323,9 @@
         </button>
         {#if storedBlobs.length > 0 && !downloadInfo["is"]}
           <button class="text-xs p-1" on:click={handleSave}>save</button>
+          <button class="text-xs p-1" on:click={handleSaveFs}
+            >save as mp3</button
+          >
         {/if}
       </div>
     </div>
