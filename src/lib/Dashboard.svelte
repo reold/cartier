@@ -1,9 +1,13 @@
 <script lang="ts">
   import PlaylistCard from "./PlaylistCard.svelte";
+  import Settings from "./Settings.svelte";
+
   import { slide } from "svelte/transition";
   import { appState } from "../store";
 
   import DotSVG from "../svg/Dot.svelte";
+
+  let openSettings: boolean = true;
 
   const handleLogout = () => {
     localStorage.removeItem("cartier-userid");
@@ -92,7 +96,13 @@
       </div>
     </div>
     <div class="flex flex-row justify-center items-center space-x-1 px-1">
-      <button class="bg-gray-950 text-white svg-icon" aria-label="settings">
+      <button
+        class="bg-gray-950 text-white svg-icon {openSettings ? 'invert' : ''}"
+        aria-label="settings"
+        on:click={() => {
+          openSettings = !openSettings;
+        }}
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -149,3 +159,5 @@
     class="backdrop-opacity-100 rounded-full backdrop-blur-sm w-[95vw] h-5 absolute bottom-0 left-auto right-auto"
   />
 </div>
+
+<Settings hidden={!openSettings} />
