@@ -39,6 +39,8 @@
   import { slide } from "svelte/transition";
 
   import { appState } from "./store";
+  import { onMount } from "svelte";
+  import PlaylistCard from "./lib/PlaylistCard.svelte";
 
   const handleUsername = (
     username: string,
@@ -56,6 +58,30 @@
       if (callback) callback();
     });
   };
+
+  onMount(async () => {
+    const root = await navigator.storage.getDirectory();
+
+    const cartierFile = await root.getFileHandle("cartier.json", {
+      create: true,
+    });
+
+    const readableCF = await cartierFile.getFile();
+
+    // create empty json cartier file
+    if (readableCF.size == 0) {
+      console.log("cartier file is empty!");
+
+      const writableCF = await cartierFile.createWritable();
+      writableCF.write(
+        JSON.stringify({
+          info: { type: "cartier-file", version: 1 },
+          playlists: [],
+        })
+      );
+      writableCF.close();
+    }
+  });
 </script>
 
 <div
