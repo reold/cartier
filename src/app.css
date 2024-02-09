@@ -46,6 +46,14 @@ button:disabled {
   @apply brightness-150 invert;
 }
 
+.svg-icon {
+  @apply flex flex-row justify-center items-center space-x-[0.5ch];
+}
+
+.svg-icon svg {
+  @apply inline;
+}
+
 .rotating-image {
   animation: spin 2s linear infinite;
 }

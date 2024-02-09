@@ -5,13 +5,13 @@
   import { requests } from "../server";
   import { notify } from "../App.svelte";
 
-  interface Playlist {
+  interface PlaylistInfo {
     tracks: { items: any[]; total: number };
   }
 
-  let playlistInfo: Playlist = {} as Playlist;
-  let storedBlobs: Blob[] = [];
-  export let track: any;
+  let playlistInfo: PlaylistInfo = {} as PlaylistInfo;
+  let storedBlobs: { blob: Blob; trackid: string }[] = [];
+  export let playlist: any;
   const downloadInfo = {
     is: false,
     statuses: {} as { [id: string]: string },
@@ -30,7 +30,7 @@
   };
 
   const loadPlaylistInfo = async () => {
-    const playlistLink = track["external_urls"]["spotify"];
+    const playlistLink = playlist["external_urls"]["spotify"];
     const playlistUrl = new URL(playlistLink);
     const playlistId = playlistUrl.pathname.split("/")[2];
 
@@ -43,12 +43,12 @@
   };
 
   const handleSave = () => {
-    storedBlobs.forEach((blob, bi) => {
+    storedBlobs.forEach(({ blob, trackid }, bi) => {
       const blobUrl = URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `${track["name"]}-${bi + 1}.mp3`;
+      a.download = `${trackid}.mp3`;
       a.click();
     });
   };
@@ -121,14 +121,14 @@
             clearInterval(refreshIntervalId);
 
             for (let i = 0; i < convertedTracks.length; i++) {
-              let [ok, blob] = await requests.getStreamPlaylist(key);
+              let [ok, blob, trackid] = await requests.getStreamPlaylist(key);
 
               if (!ok) {
-                notify(`failed downloading a track (in "${track["name"]}")`);
+                notify(`failed downloading a track (in "${playlist["name"]}")`);
                 continue;
               }
 
-              storedBlobs = [...storedBlobs, blob];
+              storedBlobs = [...storedBlobs, { blob, trackid }];
               $progress = ((i + 1) / convertedTracks.length) * 50 + 50;
             }
             await progress.set(100, { duration: 500 });
@@ -149,10 +149,10 @@
   ></div>
   <div class="grid grid-cols-4 w-full gap-1">
     <div class="col-span-1 flex flex-col items-center justify-center">
-      {#if track["images"].length > 0}
+      {#if playlist["images"].length > 0}
         <img
           loading="lazy"
-          src={track["images"][0]["url"]}
+          src={playlist["images"][0]["url"]}
           class="rounded-full max-h-[10vh] shadow-black shadow-lg ring-1 ring-black"
           alt="playlist's cover"
         />
@@ -176,9 +176,9 @@
     <div class="col-span-3 flex flex-col justify-center items-start">
       <a
         class="hover:scale-110 duration-75 text-left line-clamp-1"
-        href={track["external_urls"]["spotify"]}
+        href={playlist["external_urls"]["spotify"]}
         target="_blank"
-        >{track["name"]}
+        >{playlist["name"]}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -194,10 +194,10 @@
           />
         </svg>
       </a>
-      <p class="text-xs line-clamp-1">
-        {track["description"]}
+      <p class="text-xs line-clamp-1 text-gray-300">
+        {playlist["description"] || `by ${playlist["owner"]["display_name"]}`}
       </p>
-      <div class="flex flex-row space-x-2">
+      <div class="flex flex-row space-x-2 mt-1">
         <button
           class="bg-transparent text-white ring-1 p-1 ring-zinc-500 hover:scale-110"
           aria-label="show more"

@@ -8,6 +8,8 @@
 
   const wakeUpInfo = writable({ step: "trying to make contact", is: true });
 
+  export let handleWakeup: () => void;
+
   onMount(() => {
     $wakeUpInfo["step"] = "waking up servers";
     requests
@@ -15,6 +17,7 @@
       .then((data) => {
         $wakeUpInfo["is"] = false;
         $wakeUpInfo["step"] = "servers are running!";
+        handleWakeup();
       })
       .catch((err) => {
         notify(`unable to reach servers. err: ${err}`);
