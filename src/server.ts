@@ -1,7 +1,11 @@
-if (import.meta.env.DEV) {
+if (
+  import.meta.env.DEV &&
+  new URL(import.meta.url).origin == "http://localhost:5173"
+) {
   window["cartier-server-url"] = "http://localhost:8000" as string;
 } else {
-  window["cartier-server-url"] = "https://reold-cartier.glitch.me" as string;
+  window["cartier-server-url"] =
+    "https://cartier-backend-1.onrender.com" as string;
 }
 
 export const requests = {

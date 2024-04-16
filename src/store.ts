@@ -1,10 +1,122 @@
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
+import { requests } from "./server";
 
-export const appState = writable({
-  loggedIn: false,
-  user: {},
-  playlists: {},
+export enum TabKind {
+  PLAYLISTS,
+  DOWNLOADED,
+  SETTINGS,
+  ACCOUNT,
+}
+
+type User = {
+  display_name: string;
+  id: string;
+  images: { url: string; height: number; width: number }[];
+  followers: number;
+  external_url: string;
+};
+
+export const AppState = writable({
+  logged: false,
+  user: {} as User,
+  playlists: { downloaded: [], all: [] },
+  view: {
+    tab: TabKind.PLAYLISTS,
+  },
 });
+
+export const OPFS = writable({
+  handle: {
+    root: {} as FileSystemDirectoryHandle,
+    cartierFile: {} as FileSystemFileHandle,
+    tracksDir: {} as FileSystemDirectoryHandle,
+  },
+});
+export const CartierFile = writable({
+  playlists: [] as {
+    name: string;
+    url: string;
+    desc: string;
+    owner: string;
+    tracks: any[];
+    id: string;
+  }[],
+});
+
+export const useApp = {
+  setOPFSHandle: async () => {
+    let newOPFS = get(OPFS);
+
+    newOPFS.handle.root = await navigator.storage.getDirectory();
+    newOPFS.handle.cartierFile = await newOPFS.handle.root.getFileHandle(
+      "cartier.json",
+      {
+        create: true,
+      }
+    );
+    newOPFS.handle.tracksDir = await newOPFS.handle.root.getDirectoryHandle(
+      "tracks",
+      { create: true }
+    );
+
+    OPFS.set(newOPFS);
+  },
+
+  bufferCartierFile: async () => {
+    let opfs = get(OPFS);
+
+    const readableCF = await opfs.handle.cartierFile.getFile();
+    CartierFile.set(JSON.parse(await readableCF.text()));
+
+    CartierFile.subscribe(async (content) => {
+      const writableCF = await opfs.handle.cartierFile.createWritable();
+      await writableCF.write(JSON.stringify(content));
+      await writableCF.close();
+    });
+  },
+
+  initCartierFile: async () => {
+    await useApp.setOPFSHandle();
+
+    let opfs = get(OPFS);
+
+    const readableCF = await opfs.handle.cartierFile.getFile();
+
+    // create empty json cartier file
+    if (readableCF.size == 0) {
+      console.info("cartier file is empty!");
+
+      const writableCF = await opfs.handle.cartierFile.createWritable();
+      await writableCF.write(
+        JSON.stringify({
+          info: { type: "cartier-file", version: 1 },
+          playlists: [],
+        })
+      );
+      await writableCF.close();
+    }
+
+    useApp.bufferCartierFile();
+  },
+  login: async (username: string) => {
+    let data = await requests.getUserInfo(username);
+
+    if (data["success"] == false) return false;
+
+    AppState.set({ ...get(AppState), ...data["data"], logged: true });
+  },
+  logout: async () => {
+    localStorage.removeItem("cartier-userid");
+
+    AppState.update((oldState) => {
+      oldState["logged"] = false;
+      oldState["playlists"] = { all: [], downloaded: [] };
+      oldState["user"] = {} as User;
+
+      return oldState;
+    });
+  },
+};
 
 // export const appState = writable(
 //   import.meta.env.DEV

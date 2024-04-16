@@ -4,38 +4,41 @@
   import { notify } from "../App.svelte";
 
   const onWakeup = () => {
+    // auto login if userid in localstorage
     const userid = localStorage.getItem("cartier-userid");
 
-    console.info("performing auto login for", userid);
     if (userid) {
-      notify("performing auto-login", true, 5, (destroy) => {
-        handleUsername(userid, () => {
-          destroy();
-        });
+      console.info("performing auto login for", userid);
+      notify("performing auto-login", true, 5, async (destroy) => {
+        await handleUsername(userid);
+        destroy();
       });
     }
   };
 
-  export let handleUsername: Function;
-  let profileLink: string = "";
-  let doPersistId: boolean = true;
+  export let handleUsername: (username: string) => void;
+  let urlInput: string = "";
+  let doPerist: boolean = true;
 
   const handleUseClipboard = async () => {
     if (navigator.clipboard.readText)
-      profileLink = await navigator.clipboard.readText();
+      urlInput = await navigator.clipboard.readText();
+    else notify("unable to use the clipboard", false, 0.5);
   };
 
   const handleLogin = () => {
     let profileUrl;
+
     try {
-      profileUrl = new URL(profileLink);
+      profileUrl = new URL(urlInput);
     } catch {
-      profileLink = "";
+      urlInput = "";
       return;
     }
+
     const userid = profileUrl.pathname.split("/")[2];
 
-    if (doPersistId) {
+    if (doPerist) {
       localStorage.setItem("cartier-userid", userid);
       notify("login information saved!");
     }
@@ -45,43 +48,34 @@
 </script>
 
 <WakeUp handleWakeup={onWakeup} />
-<div class="flex flex-col justify-center items-center w-full h-full">
+<div class="flex flex-col justify-center items-center">
   <div
-    class="flex flex-col items-center text-center justify-center bg-zinc-950/50 ring-1 ring-zinc-500 rounded-md w-11/12 space-y-7 p-3"
+    class="flex flex-col items-center text-center justify-center bg-foreground ring-1 ring-border rounded-md w-11/12 space-y-7 p-3 max-w-[90vw] h-full"
   >
-    <p class="text-2xl">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-6 h-6 inline"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
-        />
-      </svg>
-      fill-in to continue
+    <p
+      class="text-3xl font-black text-white border-border border-b-2 rounded-xl px-2 pb-1"
+    >
+      Welcome aboard!
     </p>
 
     <div class="flex flex-col items-center justify-center">
       <div class="w-full flex flex-row items-center justify-center space-x-2">
-        <input
-          type="text"
-          class="w-full"
-          placeholder="type Spotify profile link"
-          bind:value={profileLink}
-          autocomplete="url"
-          aria-label="type spotify profile link"
-        />
+        <label for="spotifyprofilelinkinput">
+          <input
+            id="spotifyprofilelinkinput"
+            type="text"
+            class="w-full"
+            placeholder="type Spotify profile link"
+            bind:value={urlInput}
+            autocomplete="url"
+            aria-label="type spotify profile link"
+          />
+        </label>
 
         <button
-          class="bg-zinc-500"
+          class="bg-background text-white ring-1 ring-border"
           on:click={handleUseClipboard}
-          aria-label="paste from clipboard"
+          aria-label="paste spotify profile link from clipboard"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -99,40 +93,40 @@
         >
       </div>
 
-      <div class="text-xs svg-icon">
-        <span>copy your</span><svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-[1em] inline"
-          viewBox="-33.4974 -55.829 290.3108 334.974"
-          ><path
-            d="M177.707 98.987c-35.992-21.375-95.36-23.34-129.719-12.912-5.519 1.674-11.353-1.44-13.024-6.958-1.672-5.521 1.439-11.352 6.96-13.029 39.443-11.972 105.008-9.66 146.443 14.936 4.964 2.947 6.59 9.356 3.649 14.31-2.944 4.963-9.359 6.6-14.31 3.653m-1.178 31.658c-2.525 4.098-7.883 5.383-11.975 2.867-30.005-18.444-75.762-23.788-111.262-13.012-4.603 1.39-9.466-1.204-10.864-5.8a8.717 8.717 0 015.805-10.856c40.553-12.307 90.968-6.347 125.432 14.833 4.092 2.52 5.38 7.88 2.864 11.968m-13.663 30.404a6.954 6.954 0 01-9.569 2.316c-26.22-16.025-59.223-19.644-98.09-10.766a6.955 6.955 0 01-8.331-5.232 6.95 6.95 0 015.233-8.334c42.533-9.722 79.017-5.538 108.448 12.446a6.96 6.96 0 012.31 9.57M111.656 0C49.992 0 0 49.99 0 111.656c0 61.672 49.992 111.66 111.657 111.66 61.668 0 111.659-49.988 111.659-111.66C223.316 49.991 173.326 0 111.657 0"
-            fill="#1DB954"
-          /></svg
-        ><span>Spotify profile link from your account page</span>
-      </div>
+      <p class="text-xs svg-icon mt-[0.5em]">
+        copy your Spotify profile link from your account page
+      </p>
     </div>
-    <div class="flex flex-row items-center justify-center space-x-3">
-      <label
-        for="persisting userid"
-        class="text-base flex flex-row space-x-2 bg-gray-950 p-3 rounded-md"
-      >
-        <input type="checkbox" class="inline" bind:checked={doPersistId} />
-        <span class="align-middle">persist</span>
-      </label>
-      <button class="hover:scale-110" on:click={handleLogin}>continue</button>
+    <div class="flex flex-col space-x-[0.5em]">
+      <div class="flex flex-row items-center justify-center space-x-3">
+        <label
+          for="dopersistbtn"
+          class="text-base flex flex-row space-x-2 bg-black p-2 rounded-md"
+        >
+          <input
+            type="checkbox"
+            id="dopersistbtn"
+            class="inline"
+            bind:checked={doPerist}
+          />
+          <span class="align-middle">save</span>
+        </label>
+        <button class="hover:scale-110" on:click={handleLogin}>continue</button>
+      </div>
+      <details class="text-xs w-11/12">
+        <summary class="font-bold mb-2">
+          Know Cartier Manager, The Free Spotify Playlist Downloader
+        </summary>
+        <p class="mb-4">
+          Mobile-friendly, free-to-use Spotify playlist downloader. Share your
+          Spotify profile link to effortlessly download all your public
+          playlists.
+        </p>
+        <p>
+          Powered by <code>spotify-dl</code> on our servers, Cartier finds and downloads
+          songs from YouTube and Deezer based on Spotify data.
+        </p>
+      </details>
     </div>
   </div>
-  <details class="text-sm w-11/12">
-    <summary class="font-bold mb-2">
-      Cartier Manager: Free Spotify Playlist Downloader
-    </summary>
-    <p class="mb-4">
-      Mobile-friendly, free-to-use Spotify playlist downloader. Share your
-      Spotify profile link to effortlessly download all your public playlists.
-    </p>
-    <p>
-      Powered by <code>spotify-dl</code> on our servers, Cartier finds and downloads
-      songs from YouTube based on Spotify data.
-    </p>
-  </details>
 </div>
