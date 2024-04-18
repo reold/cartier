@@ -45,7 +45,12 @@
   });
 </script>
 
-<div class="h-[82vh] overflow-y-scroll w-[100vw]">
+<div
+  class="h-[82vh] overflow-y-scroll w-[100vw]"
+  style={$AppState.view.tab in [TabKind.PLAYLISTS, TabKind.DOWNLOADED]
+    ? ""
+    : "display: none"}
+>
   <div
     class="stickytoggle z-10 sticky top-2 w-min flex flex-row items-center justify-between rounded-xl bg-foreground ring-1 ring-border mx-auto"
   >
@@ -67,11 +72,7 @@
     class="flex flex-col justify-center items-center w-full space-y-2 pb-1 relative"
     in:slide={{ duration: 1000 }}
   >
-    {#if $AppState.view.tab == TabKind.PLAYLISTS}
-      {#each $AppState["playlists"]["all"] || [] as playlist}
-        <PlaylistCard {playlist} />
-      {/each}
-    {:else if $AppState.view.tab == TabKind.DOWNLOADED}
+    {#if $AppState.view.tab == TabKind.DOWNLOADED}
       {#if !$AppState["playlists"]["downloaded"] || $AppState["playlists"]["downloaded"].length == 0}
         <p class="pt-10">no downloads</p>
       {:else}
@@ -79,6 +80,10 @@
           <PlaylistCard {playlist} />
         {/each}
       {/if}
+    {:else}
+      {#each $AppState["playlists"]["all"] || [] as playlist}
+        <PlaylistCard {playlist} />
+      {/each}
     {/if}
   </div>
 </div>

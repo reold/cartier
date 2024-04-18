@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { notify } from "../App.svelte";
   import { requests } from "../server";
-  import { useApp, OPFS } from "../store";
+  import { AppState, useApp, OPFS, TabKind } from "../store";
 
   let settings = {};
 
@@ -46,6 +46,7 @@
 
 <div
   class="h-[82vh] overflow-y-scroll w-[100vw] flex flex-col items-center justify-center"
+  style={$AppState.view.tab == TabKind.SETTINGS ? "" : "display: none"}
 >
   <table class="text-sm ring-1 ring-border rounded-md min-w-[95vw]">
     <thead class="text-xl"><th>parameter</th><th>value</th></thead>

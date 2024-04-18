@@ -9,10 +9,7 @@
 </script>
 
 <div class="flex flex-col items-center justify-center">
-  {#if $AppState.view.tab in [TabKind.DOWNLOADED, TabKind.PLAYLISTS]}
-    <Playlist />
-  {:else if $AppState.view.tab == TabKind.SETTINGS}
-    <Settings />
-  {/if}
+  <Playlist />
+  <Settings />
   <NavBar />
 </div>

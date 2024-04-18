@@ -36,7 +36,7 @@
         $AppState.view.tab = TabKind.ACCOUNT;
       }}
     >
-      {#if $AppStae["user"]["images"] && $AppState["user"]["images"].length > 0}
+      {#if $AppState["user"]["images"] && $AppState["user"]["images"].length > 0}
         <img
           loading="lazy"
           src={$AppState["user"]["images"][0]["url"]}
