@@ -53,8 +53,6 @@
     notify("loading playlist information", true, 1, async (destroy) => {
       let data = await requests.getPlaylistInfo(playlistId);
 
-      console.log(data);
-
       $info.tracks = data;
       $info.detailedLoaded = true;
 
@@ -190,7 +188,7 @@
         setTimeout(refreshHandler, 7500);
       };
 
-      refreshHandler();
+      setTimeout(refreshHandler, 5000);
     });
   };
 </script>
@@ -201,7 +199,7 @@
   >
     <div
       class="absolute w-full h-full rounded-md blur-[2px]"
-      style={playlist["images"][0]
+      style={playlist["images"] && playlist["images"][0]
         ? `background-image: url('${playlist["images"][0]["url"]}');
     background-position: center;
     background-size: cover;
@@ -214,7 +212,7 @@
       <div
         class="grid grid-cols-12 h-full grid-rows-1 items-center justify-center"
       >
-        {#if playlist["images"].length > 0}
+        {#if playlist["images"] && playlist["images"].length > 0}
           <img
             loading="lazy"
             src={playlist["images"][0]["url"]}
