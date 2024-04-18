@@ -335,7 +335,7 @@
           {$info.tracks.length} tracks
         </p>
         {#each $info.tracks as track}
-          {#if track["images"].length > 0}
+          {#if track["images"] && track["images"].length > 0}
             <img
               loading="lazy"
               src={track["images"][track["images"].length - 1]["url"]}
