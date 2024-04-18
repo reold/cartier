@@ -1,16 +1,40 @@
 <script lang="ts">
+  import BasicPlaylistCard from "./BasicPlaylistCard.svelte";
+
   import PlaylistCard from "./PlaylistCard.svelte";
 
+  import { AppState, CartierFile, TabKind } from "../../store";
+  import type { Playlist } from "../../store";
+
   import { slide } from "svelte/transition";
-  import { AppState, TabKind } from "../../store";
   import { tweened } from "svelte/motion";
   import { circIn } from "svelte/easing";
+  import { onMount } from "svelte";
 
   let tabSwitchDiv: HTMLDivElement;
   let tabSwitchDivConfig = {
     left: tweened(0, { duration: 50, easing: circIn }),
     width: tweened(0, { duration: 50, easing: circIn }),
   };
+
+  let undownloadedPlaylists: Playlist[] = [];
+
+  const getUndownloadedPlaylists = () => {
+    undownloadedPlaylists = $AppState.playlists.all.filter((playlist) => {
+      let isStored = false;
+
+      for (let storedPlaylist of $CartierFile.playlists) {
+        if (storedPlaylist.id == playlist.id) {
+          isStored = true;
+          break;
+        }
+      }
+
+      return !isStored;
+    });
+  };
+
+  onMount(getUndownloadedPlaylists);
 
   $: {
     if (tabSwitchDiv) {
@@ -73,15 +97,15 @@
     in:slide={{ duration: 1000 }}
   >
     {#if $AppState.view.tab == TabKind.DOWNLOADED}
-      {#if !$AppState["playlists"]["downloaded"] || $AppState["playlists"]["downloaded"].length == 0}
+      {#if !$CartierFile.playlists || $CartierFile.playlists.length == 0}
         <p class="pt-10">no downloads</p>
       {:else}
-        {#each $AppState["playlists"]["downloaded"] || [] as playlist}
-          <PlaylistCard {playlist} />
+        {#each $CartierFile.playlists || [] as playlist}
+          <BasicPlaylistCard {playlist} />
         {/each}
       {/if}
     {:else}
-      {#each $AppState["playlists"]["all"] || [] as playlist}
+      {#each undownloadedPlaylists || [] as playlist}
         <PlaylistCard {playlist} />
       {/each}
     {/if}

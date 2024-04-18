@@ -1,9 +1,5 @@
 <script lang="ts">
-  import { AppState, TabKind, useApp } from "../store";
-
-  const handleLogout = async () => {
-    await useApp.logout();
-  };
+  import { AppState, TabKind } from "../store";
 </script>
 
 {#if $AppState["logged"]}

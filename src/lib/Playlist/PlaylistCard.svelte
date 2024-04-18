@@ -47,7 +47,7 @@
   };
 
   const loadPlaylistInfo = async () => {
-    const playlistUrl = new URL(playlist["external_urls"]);
+    const playlistUrl = new URL(playlist["external_url"]);
     const playlistId = playlistUrl.pathname.split("/")[2];
 
     notify("loading playlist information", true, 1, async (destroy) => {
@@ -91,10 +91,18 @@
         ...$CartierFile["playlists"],
         {
           name: playlist["name"],
-          url: playlist["external_urls"],
+          url: playlist["external_url"],
           desc: playlist["description"],
           owner: playlist["owner"]["display_name"],
-          tracks: [...$info.tracks.map((track) => track["id"])],
+          tracks: [
+            ...$info.tracks.map((track) => {
+              return {
+                id: track["id"],
+                name: track["name"],
+              };
+            }),
+          ] as any[],
+
           id: playlist["id"],
         },
       ];
@@ -418,7 +426,7 @@
     <div class="col-span-3 flex flex-col justify-center items-start">
       <a
         class="hover:scale-110 duration-75 text-left line-clamp-1"
-        href={playlist["external_urls"]}
+        href={playlist["external_url"]}
         target="_blank"
         >{playlist["name"]}
         <svg

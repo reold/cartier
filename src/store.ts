@@ -16,10 +16,37 @@ type User = {
   external_url: string;
 };
 
+export type BasicPlaylist = {
+  name: string;
+  url: string;
+  desc: string;
+  owner: string;
+  tracks: { id: string; name: string }[];
+  id: string;
+};
+
+export type Playlist = {
+  description: string;
+  external_url: string;
+  href: string;
+  owner: {
+    display_name: string;
+    external_urls: { spotify: string };
+    href: string;
+    id: string;
+    type: string;
+    uri: string;
+  };
+  images: { url: string; width: number; height: number }[];
+  id: string;
+  url: string;
+  name: string;
+};
+
 export const AppState = writable({
   logged: false,
   user: {} as User,
-  playlists: { downloaded: [], all: [] },
+  playlists: { downloaded: [] as BasicPlaylist[], all: [] as Playlist[] },
   view: {
     tab: TabKind.PLAYLISTS,
   },
@@ -33,14 +60,8 @@ export const OPFS = writable({
   },
 });
 export const CartierFile = writable({
-  playlists: [] as {
-    name: string;
-    url: string;
-    desc: string;
-    owner: string;
-    tracks: any[];
-    id: string;
-  }[],
+  playlists: [] as BasicPlaylist[],
+  info: { type: "", version: 0 },
 });
 
 export const useApp = {
@@ -96,7 +117,7 @@ export const useApp = {
       await writableCF.close();
     }
 
-    useApp.bufferCartierFile();
+    await useApp.bufferCartierFile();
   },
   login: async (username: string) => {
     let data = await requests.getUserInfo(username);
@@ -123,7 +144,7 @@ export const useApp = {
 //     ? {
 //         user: {
 //           display_name: "Aadhi + Reold",
-//           external_urls: {
+//           external_url: {
 //             spotify: "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //           },
 //           href: "https://api.spotify.com/v1/users/krr5eq9z17bjfoidb38r5uik8",
@@ -150,7 +171,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4DU3CC6QCnI6OOiPJFcRN8",
 //               },
@@ -160,7 +181,7 @@ export const useApp = {
 //               name: "Download",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -183,7 +204,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/1qnxK0KItEJGZLA2xaFxl6",
 //               },
@@ -199,7 +220,7 @@ export const useApp = {
 //               name: "Feels good to be alive.",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -222,7 +243,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/59OOem6SoudC5hginqutgf",
 //               },
@@ -238,7 +259,7 @@ export const useApp = {
 //               name: "Drops",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -261,7 +282,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "Best of 90s from Mollywood.\nCover: Shobana",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/37i9dQZF1DX54H77RAFJQ9",
 //               },
@@ -277,7 +298,7 @@ export const useApp = {
 //               name: "All out 90s Malayalam",
 //               owner: {
 //                 display_name: "Spotify",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/spotify",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/spotify",
@@ -299,7 +320,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/0Kklyw1IKm9bsctYnUpDlf",
 //               },
@@ -315,7 +336,7 @@ export const useApp = {
 //               name: "Mohanlal old hits",
 //               owner: {
 //                 display_name: "Malavika",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/1knj6nfm5h6prahvvprla9ci6",
 //                 },
@@ -339,7 +360,7 @@ export const useApp = {
 //               collaborative: false,
 //               description:
 //                 "Best love songs of 1980s from Mollywood.\nCover: Chithram",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/37i9dQZF1DX24Nux3gigVe",
 //               },
@@ -355,7 +376,7 @@ export const useApp = {
 //               name: "80s Love Malayalam",
 //               owner: {
 //                 display_name: "Spotify",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/spotify",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/spotify",
@@ -377,7 +398,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "different vibe? hopefully 🤞",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3n6lIykbh0n2OlwZWKQaWT",
 //               },
@@ -393,7 +414,7 @@ export const useApp = {
 //               name: "Differential lock",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -416,7 +437,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/2HKQbtCTJWoMKlZIVOKpBn",
 //               },
@@ -442,7 +463,7 @@ export const useApp = {
 //               name: "Sleep",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -465,7 +486,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/5OSCmxV0KNtwqYyhrEFsqv",
 //               },
@@ -481,7 +502,7 @@ export const useApp = {
 //               name: "Bodyguards",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -504,7 +525,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "25% extra delicious",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/2SoJmrkzUQXm5SakZlQi2q",
 //               },
@@ -520,7 +541,7 @@ export const useApp = {
 //               name: "Gems —hindi",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -543,7 +564,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4WTuDCd1XnnlRvA5T3nzY3",
 //               },
@@ -559,7 +580,7 @@ export const useApp = {
 //               name: "Only legends understand.",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -582,7 +603,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "wanna journey in my dad&#x27;s suzuki?",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4sFsoEVDzg3UPb7OVqkeSa",
 //               },
@@ -598,7 +619,7 @@ export const useApp = {
 //               name: "Dad's Radio",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -621,7 +642,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "works all the time, I promise",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4f3fKAfVgRFMqFBYV6TDcf",
 //               },
@@ -637,7 +658,7 @@ export const useApp = {
 //               name: "Free Refills",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -660,7 +681,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "relatable hits of my occasional genres",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/1deMqexkz4JI2AAQM8qi0Q",
 //               },
@@ -676,7 +697,7 @@ export const useApp = {
 //               name: "Around you!",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -699,7 +720,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3DhoYtbVYRvGSgfhLDXylK",
 //               },
@@ -715,7 +736,7 @@ export const useApp = {
 //               name: "July Solstice",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -739,7 +760,7 @@ export const useApp = {
 //               collaborative: false,
 //               description:
 //                 "Listen to short underrated songs which will play with your emotions",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/13gMwZ8em4Na1sof5EIPoZ",
 //               },
@@ -755,7 +776,7 @@ export const useApp = {
 //               name: "Dramatic Emotions",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -778,7 +799,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3kn7bPZDd8obw2U2utcCai",
 //               },
@@ -804,7 +825,7 @@ export const useApp = {
 //               name: "Malayalam melody hits 💚💚",
 //               owner: {
 //                 display_name: "Siva",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/31vyyzi3vedzyhdvj6v3graqqccm",
 //                 },
@@ -827,7 +848,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/5cNp1xS22nNOwVtLMIm8og",
 //               },
@@ -843,7 +864,7 @@ export const useApp = {
 //               name: "DATA WING Soundtrack",
 //               owner: {
 //                 display_name: "Dan Vogt",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/12173541933",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/12173541933",
@@ -865,7 +886,7 @@ export const useApp = {
 //             {
 //               collaborative: false,
 //               description: "=) and =( ",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3GFzRbM1yBzBRf9KrAJd7l",
 //               },
@@ -891,7 +912,7 @@ export const useApp = {
 //               name: "My Favs",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
