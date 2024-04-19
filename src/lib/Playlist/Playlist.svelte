@@ -93,7 +93,7 @@
     >
   </div>
   <div
-    class="flex flex-col justify-center items-center w-full space-y-2 pb-1 relative"
+    class="flex flex-col justify-center items-center w-full space-y-2 pb-[11vh] relative"
     in:slide={{ duration: 1000 }}
   >
     {#if $AppState.view.tab == TabKind.DOWNLOADED}

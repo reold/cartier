@@ -22,15 +22,49 @@
 
   const loadSettings = () => {
     notify("loading settings", true, 5, async (destroy) => {
-      const opfsEstimate = await navigator.storage.estimate();
       let opfsUsed = 0;
+      let updateInfo = "";
 
-      if (opfsEstimate) opfsUsed = opfsEstimate["usage"] / 1024 ** 2;
+      {
+        const opfsEstimate = await navigator.storage.estimate();
+        if (opfsEstimate) opfsUsed = opfsEstimate["usage"] / 1024 ** 2;
+      }
+
+      {
+        const resp = await fetch(
+          "https://api.github.com/repos/reold/cartier/deployments"
+        );
+
+        const data = await resp.json();
+        const updatedAt = new Date(data[0]["updated_at"]);
+        const now = new Date();
+
+        const timeDiff = now.getTime() - updatedAt.getTime();
+
+        const seconds = Math.floor(timeDiff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        let timeAgo;
+        if (days > 0) {
+          timeAgo = days === 1 ? "1 day" : `${days} days`;
+        } else if (hours > 0) {
+          timeAgo = hours === 1 ? "1 hour" : `${hours} hours`;
+        } else if (minutes > 0) {
+          timeAgo = minutes === 1 ? "1 minute" : `${minutes} minutes`;
+        } else {
+          timeAgo = seconds === 1 ? "1 second" : `${seconds} seconds`;
+        }
+
+        updateInfo = `${timeAgo} ago by ${data[0]["creator"]["login"]}`;
+      }
 
       settings = {
+        ropfs_used: `${opfsUsed.toFixed(1)} MB`,
         rsaved_userid: localStorage.getItem("cartier-userid") || "not saved",
         rserver_url: window["cartier-server-url"],
-        ropfs_used: `${opfsUsed.toFixed(1)} MB`,
+        rfrontend_updated: updateInfo,
         wthank_you_for: "testing our beta version!",
       };
 

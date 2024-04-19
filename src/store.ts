@@ -21,8 +21,14 @@ export type BasicPlaylist = {
   url: string;
   desc: string;
   owner: string;
-  tracks: { id: string; name: string }[];
+  tracks: string[];
   id: string;
+};
+
+export type BasicTrack = {
+  id: string;
+  name: string;
+  dependants: { id: string }[];
 };
 
 export type Playlist = {
@@ -61,6 +67,7 @@ export const OPFS = writable({
 });
 export const CartierFile = writable({
   playlists: [] as BasicPlaylist[],
+  tracks: [] as BasicTrack[],
   info: { type: "", version: 0 },
 });
 
@@ -112,6 +119,7 @@ export const useApp = {
         JSON.stringify({
           info: { type: "cartier-file", version: 1 },
           playlists: [],
+          tracks: [],
         })
       );
       await writableCF.close();

@@ -1,9 +1,25 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   import { notify } from "../../App.svelte";
   import { CartierFile } from "../../store";
   import type { BasicPlaylist } from "../../store";
 
+  import { usePlayer } from "../../player";
+
   export let playlist: BasicPlaylist;
+  let tracks = [] as { id: string; name: string }[];
+
+  onMount(() => {
+    playlist.tracks.forEach((trackid) => {
+      for (let t of $CartierFile.tracks) {
+        if (t.id == trackid) {
+          tracks = [...tracks, { id: t.id, name: t.name }];
+          break;
+        }
+      }
+    });
+  });
 
   const handleRemovePlaylist = () => {
     let playlists = $CartierFile.playlists;
@@ -12,6 +28,14 @@
     $CartierFile.playlists = playlists;
 
     notify(`removed "${playlist.name}" from downloads`, false, 2);
+  };
+
+  const handlePlay = () => {
+    usePlayer.queue.addPlaylist(playlist.id);
+    usePlayer.play();
+  };
+  const handleAddToQueue = () => {
+    usePlayer.queue.addPlaylist(playlist.id);
   };
 </script>
 
@@ -29,7 +53,7 @@
   <ol
     class="ring-1 ring-border col-span-3 p-2 rounded-t-md bg-foreground overflow-x-hidden overflow-y-scroll"
   >
-    {#each playlist.tracks as track}
+    {#each tracks as track}
       <li class="truncate">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -49,6 +73,7 @@
   <!-- play -->
   <button
     class="svg-icon ring-1 ring-border p-0 text-xs rounded-none rounded-bl-md"
+    on:click={handlePlay}
     ><svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
@@ -63,7 +88,9 @@
     </svg>
   </button>
   <!-- add to queue -->
-  <button class="svg-icon ring-1 ring-border p-0 text-xs rounded-none"
+  <button
+    class="svg-icon ring-1 ring-border p-0 text-xs rounded-none"
+    on:click={handleAddToQueue}
     ><svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
@@ -93,9 +120,3 @@
     </svg>
   </button>
 </div>
-
-<style>
-  .stickytoggle > button {
-    @apply text-white z-20 bg-transparent;
-  }
-</style>

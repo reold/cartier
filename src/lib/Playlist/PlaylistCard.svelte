@@ -74,18 +74,28 @@
 
   // save blobs in memory to OPFS
   const handleSave = () => {
-    notify("saving to Cartier", true, 10, (destroy) => {
+    notify("saving to Cartier", true, 10, async (destroy) => {
       const tracksDir = $OPFS.handle.tracksDir;
 
-      $info.memblobs.forEach(async ({ blob, id }) => {
+      for (let { blob, id } of $info.memblobs) {
+        // new downloads (not stored)
         const track = await tracksDir.getFileHandle(`${id}.mp3`, {
           create: true,
         });
 
+        $CartierFile.tracks = [
+          ...$CartierFile.tracks,
+          {
+            id,
+            name: $info.tracks.find((track) => track.id == id).name,
+            dependants: [],
+          },
+        ];
+
         const writable = await track.createWritable();
         await writable.write(blob);
         await writable.close();
-      });
+      }
 
       $CartierFile["playlists"] = [
         ...$CartierFile["playlists"],
@@ -94,18 +104,22 @@
           url: playlist["external_url"],
           desc: playlist["description"],
           owner: playlist["owner"]["display_name"],
-          tracks: [
-            ...$info.tracks.map((track) => {
-              return {
-                id: track["id"],
-                name: track["name"],
-              };
-            }),
-          ] as any[],
-
+          tracks: [...$info.tracks.map((track) => track["id"])] as any[],
           id: playlist["id"],
         },
       ];
+
+      for (let track of $info.tracks) {
+        for (let [i, t] of $CartierFile.tracks.entries()) {
+          if (t.id == track.id) {
+            $CartierFile.tracks[i].dependants = [
+              ...$CartierFile.tracks[i].dependants,
+              playlist.id,
+            ];
+            break;
+          }
+        }
+      }
 
       destroy();
       notify("saved to Cartier!", false, 2);
@@ -127,7 +141,26 @@
     progress.set(0, { duration: 1 });
     progress.set(10, { duration: 10_000 });
 
-    let fTrack = $info.tracks[0];
+    let tracks = $info.tracks;
+
+    tracks = tracks.filter((track) => {
+      let isStored = false;
+
+      for (let savedTrack of $CartierFile.tracks) {
+        if (track.id == savedTrack.id) {
+          isStored = true;
+          break;
+        }
+      }
+
+      if (isStored) {
+        $info.download.status[track["id"]] = "ready";
+      }
+
+      return !isStored;
+    });
+
+    let fTrack = tracks[0];
 
     // add first song for downloading
     // and getting unique container id for tracking
@@ -143,7 +176,7 @@
       $info.download.status[fTrack["id"]] = "downloading";
 
       // add remaining songs for downloading
-      for (const [ti, track] of [...$info.tracks].splice(1).entries()) {
+      for (const [ti, track] of [...tracks].splice(1).entries()) {
         $info.download.status[track["id"]] = "downloading";
 
         const data = await requests.getDownloadTrack(track["url"], key, false);
