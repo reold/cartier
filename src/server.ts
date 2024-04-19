@@ -15,7 +15,7 @@ export const requests = {
   },
   getUserInfo: async (username: string) => {
     let resp = await fetch(
-      `${window["cartier-server-url"]}/user?username=${username}`
+      local`${window["cartier-server-url"]}/user?username=${username}`
     );
 
     return await resp.json();

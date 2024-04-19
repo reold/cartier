@@ -12,7 +12,8 @@
       true,
       10,
       async (destroy) => {
-        await $OPFS.handle.root.remove({ recursive: true });
+        await $OPFS.handle.root.removeEntry("tracks", { recursive: true });
+        await $OPFS.handle.root.removeEntry("cartier.json");
         destroy();
         window.location.reload();
       }
