@@ -38,6 +38,7 @@
 
   const handleAddToQueue = () => {
     usePlayer.queue.addPlaylist(playlist.id);
+    notify(`"${playlist.name}" added to queue`);
   };
 </script>
 

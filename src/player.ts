@@ -24,6 +24,8 @@ export const PlayerState = writable({
     handle: {} as HTMLAudioElement,
     id: "",
     name: "",
+    dur: 1,
+    time: 0,
     playing: false,
   },
 });
@@ -49,6 +51,29 @@ export const usePlayer = {
 
     playerstate.playback.handle = new Audio(blobURL);
     playerstate.playback.handle.play();
+
+    playerstate.playback.handle.addEventListener("loadeddata", () => {
+      PlayerState.update((playerstate) => {
+        playerstate.playback.dur = playerstate.playback.handle.duration;
+        return playerstate;
+      });
+    });
+
+    playerstate.playback.handle.addEventListener("timeupdate", () => {
+      PlayerState.update((playerstate) => {
+        playerstate.playback.time = playerstate.playback.handle.currentTime;
+        return playerstate;
+      });
+    });
+
+    playerstate.playback.handle.addEventListener("ended", () => {
+      let playerstate = get(PlayerState);
+
+      if (playerstate.queue.length > 0) {
+        usePlayer.next();
+        usePlayer.play();
+      }
+    });
 
     PlayerState.set(playerstate);
   },
