@@ -6,7 +6,19 @@ export type QueueTrack = {
   name: string;
 };
 
+// export const PlayerState = writable({
+//   loaded: true, // DEV: change to false for production
+//   queue: [] as QueueTrack[],
+//   playback: {
+//     handle: {} as HTMLAudioElement,
+//     id: "",
+//     name: "Alapuzha Pattanathil (from the beloved 90s movie unknown unknowinsit)",
+//     playing: false,
+//   },
+// });
+
 export const PlayerState = writable({
+  loaded: false,
   queue: [] as QueueTrack[],
   playback: {
     handle: {} as HTMLAudioElement,
@@ -20,11 +32,8 @@ export const usePlayer = {
   play: async () => {
     let playerstate = get(PlayerState);
 
-    if (!playerstate.playback.playing) {
-      usePlayer.next();
-      playerstate = get(PlayerState);
-    } else {
-      playerstate.playback.handle.pause();
+    if (!playerstate.loaded) {
+      playerstate.loaded = true;
     }
 
     playerstate.playback.playing = true;
@@ -48,41 +57,61 @@ export const usePlayer = {
     let playerstate = get(PlayerState);
 
     playerstate.playback.handle.pause();
+    playerstate.playback.playing = false;
+
+    PlayerState.set(playerstate);
   },
 
   resume: () => {
     let playerstate = get(PlayerState);
 
     playerstate.playback.handle.play();
+    playerstate.playback.playing = true;
+
+    PlayerState.set(playerstate);
   },
 
   next: () => {
     let playerstate = get(PlayerState);
 
     let queueItem = playerstate.queue[0];
-    playerstate.queue.splice(0, 1);
+
+    if (!queueItem) {
+      return false;
+    }
+
+    if (playerstate.playback.playing) {
+      usePlayer.pause();
+    }
 
     playerstate.playback.name = queueItem.name;
     playerstate.playback.id = queueItem.id;
 
+    playerstate.queue.splice(0, 1);
+
     PlayerState.set(playerstate);
+
+    return true;
   },
 
   queue: {
-    addTrack: (id: string) => {
+    addTrack: (id: string, insert: boolean = false) => {
       let playerstate = get(PlayerState);
       let cartierfile = get(CartierFile);
 
       for (let track of cartierfile.tracks) {
         if (track.id == id) {
-          playerstate.queue = [...playerstate.queue, { id, name: track.name }];
+          playerstate.queue = insert
+            ? [{ id, name: track.name }, ...playerstate.queue]
+            : [...playerstate.queue, { id, name: track.name }];
+
           break;
         }
       }
 
       PlayerState.set(playerstate);
     },
-    addPlaylist: (id: string) => {
+    addPlaylist: (id: string, insert: boolean = false) => {
       let cartierfile = get(CartierFile);
 
       const playlist = cartierfile.playlists.find(
@@ -90,9 +119,10 @@ export const usePlayer = {
       );
 
       if (!playlist) return;
+      if (insert) playlist.tracks.reverse();
 
       playlist.tracks.forEach((id) => {
-        usePlayer.queue.addTrack(id);
+        usePlayer.queue.addTrack(id, insert);
       });
     },
   },

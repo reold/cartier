@@ -31,9 +31,11 @@
   };
 
   const handlePlay = () => {
-    usePlayer.queue.addPlaylist(playlist.id);
+    usePlayer.queue.addPlaylist(playlist.id, true);
+    usePlayer.next();
     usePlayer.play();
   };
+
   const handleAddToQueue = () => {
     usePlayer.queue.addPlaylist(playlist.id);
   };

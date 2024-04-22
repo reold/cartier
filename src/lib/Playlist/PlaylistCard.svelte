@@ -160,10 +160,19 @@
       return !isStored;
     });
 
+    // check if all tracks are already stored
+    if (tracks.length == 0) {
+      await progress.set(100, { duration: 500 });
+      $info.downloading = false;
+      $info.download.done = true;
+
+      return;
+    }
+
     let fTrack = tracks[0];
 
     // add first song for downloading
-    // and getting unique container id for tracking
+    // and get unique id for tracking
     requests.getDownloadTrack(fTrack["url"], "", true).then(async (data) => {
       if (data["success"] == false) {
         $progress = 0;

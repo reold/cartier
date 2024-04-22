@@ -20,6 +20,10 @@
   let undownloadedPlaylists: Playlist[] = [];
 
   const getUndownloadedPlaylists = () => {
+    if (!$CartierFile.playlists) {
+      undownloadedPlaylists = $AppState.playlists.all;
+      return;
+    }
     undownloadedPlaylists = $AppState.playlists.all.filter((playlist) => {
       let isStored = false;
 
