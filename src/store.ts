@@ -1,17 +1,158 @@
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
+import { requests } from "./server";
 
-export const appState = writable({
-  loggedIn: false,
-  user: {},
-  playlists: {},
+export enum TabKind {
+  PLAYLISTS,
+  DOWNLOADED,
+  SETTINGS,
+  ACCOUNT,
+}
+
+type User = {
+  display_name: string;
+  id: string;
+  images: { url: string; height: number; width: number }[];
+  followers: number;
+  external_url: string;
+};
+
+export type BasicPlaylist = {
+  name: string;
+  url: string;
+  desc: string;
+  owner: string;
+  tracks: string[];
+  id: string;
+};
+
+export type BasicTrack = {
+  id: string;
+  name: string;
+  dependants: { id: string }[];
+};
+
+export type Playlist = {
+  description: string;
+  external_url: string;
+  href: string;
+  owner: {
+    display_name: string;
+    external_urls: { spotify: string };
+    href: string;
+    id: string;
+    type: string;
+    uri: string;
+  };
+  images: { url: string; width: number; height: number }[];
+  id: string;
+  url: string;
+  name: string;
+};
+
+export const AppState = writable({
+  logged: false,
+  user: {} as User,
+  playlists: { downloaded: [] as BasicPlaylist[], all: [] as Playlist[] },
+  view: {
+    tab: TabKind.PLAYLISTS,
+  },
 });
+
+export const OPFS = writable({
+  handle: {
+    root: {} as FileSystemDirectoryHandle,
+    cartierFile: {} as FileSystemFileHandle,
+    tracksDir: {} as FileSystemDirectoryHandle,
+  },
+});
+export const CartierFile = writable({
+  playlists: [] as BasicPlaylist[],
+  tracks: [] as BasicTrack[],
+  info: { type: "", version: 0 },
+});
+
+export const useApp = {
+  setOPFSHandle: async () => {
+    let newOPFS = get(OPFS);
+
+    newOPFS.handle.root = await navigator.storage.getDirectory();
+    newOPFS.handle.cartierFile = await newOPFS.handle.root.getFileHandle(
+      "cartier.json",
+      {
+        create: true,
+      }
+    );
+    newOPFS.handle.tracksDir = await newOPFS.handle.root.getDirectoryHandle(
+      "tracks",
+      { create: true }
+    );
+
+    OPFS.set(newOPFS);
+  },
+
+  bufferCartierFile: async () => {
+    let opfs = get(OPFS);
+
+    const readableCF = await opfs.handle.cartierFile.getFile();
+    CartierFile.set(JSON.parse(await readableCF.text()));
+
+    CartierFile.subscribe(async (content) => {
+      const writableCF = await opfs.handle.cartierFile.createWritable();
+      await writableCF.write(JSON.stringify(content));
+      await writableCF.close();
+    });
+  },
+
+  initCartierFile: async () => {
+    await useApp.setOPFSHandle();
+
+    let opfs = get(OPFS);
+
+    const readableCF = await opfs.handle.cartierFile.getFile();
+
+    // create empty json cartier file
+    if (readableCF.size == 0) {
+      console.info("cartier file is empty!");
+
+      const writableCF = await opfs.handle.cartierFile.createWritable();
+      await writableCF.write(
+        JSON.stringify({
+          info: { type: "cartier-file", version: 1 },
+          playlists: [],
+          tracks: [],
+        })
+      );
+      await writableCF.close();
+    }
+
+    await useApp.bufferCartierFile();
+  },
+  login: async (username: string) => {
+    let data = await requests.getUserInfo(username);
+
+    if (data["success"] == false) return false;
+
+    AppState.set({ ...get(AppState), ...data["data"], logged: true });
+  },
+  logout: async () => {
+    localStorage.removeItem("cartier-userid");
+
+    AppState.update((oldState) => {
+      oldState["logged"] = false;
+      oldState["playlists"] = { all: [], downloaded: [] };
+      oldState["user"] = {} as User;
+
+      return oldState;
+    });
+  },
+};
 
 // export const appState = writable(
 //   import.meta.env.DEV
 //     ? {
 //         user: {
 //           display_name: "Aadhi + Reold",
-//           external_urls: {
+//           external_url: {
 //             spotify: "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //           },
 //           href: "https://api.spotify.com/v1/users/krr5eq9z17bjfoidb38r5uik8",
@@ -38,7 +179,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4DU3CC6QCnI6OOiPJFcRN8",
 //               },
@@ -48,7 +189,7 @@ export const appState = writable({
 //               name: "Download",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -71,7 +212,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/1qnxK0KItEJGZLA2xaFxl6",
 //               },
@@ -87,7 +228,7 @@ export const appState = writable({
 //               name: "Feels good to be alive.",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -110,7 +251,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/59OOem6SoudC5hginqutgf",
 //               },
@@ -126,7 +267,7 @@ export const appState = writable({
 //               name: "Drops",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -149,7 +290,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "Best of 90s from Mollywood.\nCover: Shobana",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/37i9dQZF1DX54H77RAFJQ9",
 //               },
@@ -165,7 +306,7 @@ export const appState = writable({
 //               name: "All out 90s Malayalam",
 //               owner: {
 //                 display_name: "Spotify",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/spotify",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/spotify",
@@ -187,7 +328,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/0Kklyw1IKm9bsctYnUpDlf",
 //               },
@@ -203,7 +344,7 @@ export const appState = writable({
 //               name: "Mohanlal old hits",
 //               owner: {
 //                 display_name: "Malavika",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/1knj6nfm5h6prahvvprla9ci6",
 //                 },
@@ -227,7 +368,7 @@ export const appState = writable({
 //               collaborative: false,
 //               description:
 //                 "Best love songs of 1980s from Mollywood.\nCover: Chithram",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/37i9dQZF1DX24Nux3gigVe",
 //               },
@@ -243,7 +384,7 @@ export const appState = writable({
 //               name: "80s Love Malayalam",
 //               owner: {
 //                 display_name: "Spotify",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/spotify",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/spotify",
@@ -265,7 +406,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "different vibe? hopefully 🤞",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3n6lIykbh0n2OlwZWKQaWT",
 //               },
@@ -281,7 +422,7 @@ export const appState = writable({
 //               name: "Differential lock",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -304,7 +445,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/2HKQbtCTJWoMKlZIVOKpBn",
 //               },
@@ -330,7 +471,7 @@ export const appState = writable({
 //               name: "Sleep",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -353,7 +494,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/5OSCmxV0KNtwqYyhrEFsqv",
 //               },
@@ -369,7 +510,7 @@ export const appState = writable({
 //               name: "Bodyguards",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -392,7 +533,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "25% extra delicious",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/2SoJmrkzUQXm5SakZlQi2q",
 //               },
@@ -408,7 +549,7 @@ export const appState = writable({
 //               name: "Gems —hindi",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -431,7 +572,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4WTuDCd1XnnlRvA5T3nzY3",
 //               },
@@ -447,7 +588,7 @@ export const appState = writable({
 //               name: "Only legends understand.",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -470,7 +611,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "wanna journey in my dad&#x27;s suzuki?",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4sFsoEVDzg3UPb7OVqkeSa",
 //               },
@@ -486,7 +627,7 @@ export const appState = writable({
 //               name: "Dad's Radio",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -509,7 +650,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "works all the time, I promise",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/4f3fKAfVgRFMqFBYV6TDcf",
 //               },
@@ -525,7 +666,7 @@ export const appState = writable({
 //               name: "Free Refills",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -548,7 +689,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "relatable hits of my occasional genres",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/1deMqexkz4JI2AAQM8qi0Q",
 //               },
@@ -564,7 +705,7 @@ export const appState = writable({
 //               name: "Around you!",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -587,7 +728,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3DhoYtbVYRvGSgfhLDXylK",
 //               },
@@ -603,7 +744,7 @@ export const appState = writable({
 //               name: "July Solstice",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -627,7 +768,7 @@ export const appState = writable({
 //               collaborative: false,
 //               description:
 //                 "Listen to short underrated songs which will play with your emotions",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/13gMwZ8em4Na1sof5EIPoZ",
 //               },
@@ -643,7 +784,7 @@ export const appState = writable({
 //               name: "Dramatic Emotions",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },
@@ -666,7 +807,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3kn7bPZDd8obw2U2utcCai",
 //               },
@@ -692,7 +833,7 @@ export const appState = writable({
 //               name: "Malayalam melody hits 💚💚",
 //               owner: {
 //                 display_name: "Siva",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/31vyyzi3vedzyhdvj6v3graqqccm",
 //                 },
@@ -715,7 +856,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/5cNp1xS22nNOwVtLMIm8og",
 //               },
@@ -731,7 +872,7 @@ export const appState = writable({
 //               name: "DATA WING Soundtrack",
 //               owner: {
 //                 display_name: "Dan Vogt",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify: "https://open.spotify.com/user/12173541933",
 //                 },
 //                 href: "https://api.spotify.com/v1/users/12173541933",
@@ -753,7 +894,7 @@ export const appState = writable({
 //             {
 //               collaborative: false,
 //               description: "=) and =( ",
-//               external_urls: {
+//               external_url: {
 //                 spotify:
 //                   "https://open.spotify.com/playlist/3GFzRbM1yBzBRf9KrAJd7l",
 //               },
@@ -779,7 +920,7 @@ export const appState = writable({
 //               name: "My Favs",
 //               owner: {
 //                 display_name: "Aadhi + Reold",
-//                 external_urls: {
+//                 external_url: {
 //                   spotify:
 //                     "https://open.spotify.com/user/krr5eq9z17bjfoidb38r5uik8",
 //                 },

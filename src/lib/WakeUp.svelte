@@ -20,16 +20,16 @@
         handleWakeup();
       })
       .catch((err) => {
-        notify(`unable to reach servers. err: ${err}`);
-        $wakeUpInfo["step"] = "servers unreachable (reload?)";
+        notify(`servers are unreachable (${err})`);
+        $wakeUpInfo["step"] = "servers are unreachable (reload?)";
       });
   });
 </script>
 
 <Dialog hidden={!$wakeUpInfo["is"]}>
-  <h1 class="text-xl">Waking up servers!</h1>
-  <p class="text-xs text-gray-500 inline">
-    Our servers take a little break every 5 minutes when things quiet down.
+  <h1 class="text-2xl">Starting Up Servers!</h1>
+  <p class="text-xs text-white/70 inline">
+    Our servers take a little break every few minutes when things quiet down.
     We're in the process of waking them up for you. It's automatic, so no need
     to stress!
   </p>
