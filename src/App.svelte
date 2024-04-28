@@ -38,7 +38,9 @@
     await useApp.login(username);
   };
 
-  onMount(useApp.initCartierFile);
+  onMount(() => {
+    useApp.initCartierFile();
+  });
 </script>
 
 <div

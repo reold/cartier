@@ -3,7 +3,7 @@
 
   import PlaylistCard from "./PlaylistCard.svelte";
 
-  import { AppState, CartierFile, TabKind } from "../../store";
+  import { AppState, CartierFile, Socket, TabKind } from "../../store";
   import type { Playlist } from "../../store";
 
   import { slide } from "svelte/transition";
@@ -71,6 +71,38 @@
   tabSwitchDivConfig.width.subscribe((width) => {
     if (tabSwitchDiv) tabSwitchDiv.style.width = `${width}px`;
   });
+
+  const handleSocketIO = () => {
+    return;
+    if ($Socket.loaded) return;
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.socket.io/4.7.5/socket.io.min.js";
+    script.integrity =
+      "sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO";
+    script.crossOrigin = "anonymous";
+
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      $Socket.io = io(window["cartier-server-url"]);
+      $Socket.loaded = true;
+
+      $Socket.io.on("connect", () => {
+        console.info(`live connection opened (${$Socket.io.id})`);
+
+        $Socket.io.emit("login", {
+          id: $AppState.user.id,
+          name: $AppState.user.display_name,
+        });
+      });
+      $Socket.io.on("disconnect", () => {
+        console.info("live connection ended");
+      });
+    };
+  };
+
+  onMount(handleSocketIO);
 </script>
 
 <div
@@ -98,8 +130,8 @@
   </div>
   <div
     class="flex flex-col justify-center items-center w-full space-y-2 pb-[11vh] relative"
-    in:slide={{ duration: 1000 }}
   >
+    <!-- in:slide={{ duration: 1000 }} -->
     {#if $AppState.view.tab == TabKind.DOWNLOADED}
       {#if !$CartierFile.playlists || $CartierFile.playlists.length == 0}
         <p class="pt-10">no downloads</p>

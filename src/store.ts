@@ -71,6 +71,8 @@ export const CartierFile = writable({
   info: { type: "", version: 0 },
 });
 
+export const Socket = writable({ io: {}, loaded: false });
+
 export const useApp = {
   setOPFSHandle: async () => {
     let newOPFS = get(OPFS);
