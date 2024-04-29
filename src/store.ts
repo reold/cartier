@@ -51,6 +51,7 @@ export type Playlist = {
 
 export const AppState = writable({
   logged: false,
+  offline: true,
   user: {} as User,
   playlists: { downloaded: [] as BasicPlaylist[], all: [] as Playlist[] },
   view: {
