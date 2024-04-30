@@ -13,9 +13,9 @@ export const requests = {
 
     return await resp.json();
   },
-  getUserInfo: async (username: string) => {
+  getUserInfo: async (userid: string) => {
     let resp = await fetch(
-      `${window["cartier-server-url"]}/api/user?username=${username}`
+      `${window["cartier-server-url"]}/api/user?userid=${userid}`
     );
 
     return await resp.json();

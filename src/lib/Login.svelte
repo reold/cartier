@@ -3,20 +3,7 @@
 
   import { notify } from "../App.svelte";
 
-  const onWakeup = () => {
-    // auto login if userid in localstorage
-    const userid = localStorage.getItem("cartier-userid");
-
-    if (userid) {
-      console.info("performing auto login for", userid);
-      notify("performing auto-login", true, 5, async (destroy) => {
-        await handleUsername(userid);
-        destroy();
-      });
-    }
-  };
-
-  export let handleUsername: (username: string) => void;
+  export let handleUserid: (userid: string) => void;
   let urlInput: string = "";
   let doPerist: boolean = true;
 
@@ -43,11 +30,10 @@
       notify("login information saved!");
     }
 
-    handleUsername(userid);
+    handleUserid(userid);
   };
 </script>
 
-<WakeUp handleWakeup={onWakeup} />
 <div class="flex flex-col justify-center items-center">
   <div
     class="flex flex-col items-center text-center justify-center bg-foreground ring-1 ring-border rounded-md w-11/12 space-y-7 p-3 max-w-[90vw] h-full"

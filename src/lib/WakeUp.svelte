@@ -8,7 +8,7 @@
 
   const wakeUpInfo = writable({ step: "trying to make contact", is: true });
 
-  export let handleWakeup: () => void;
+  export let handleWakeup: (online: boolean) => void;
 
   onMount(() => {
     $wakeUpInfo["step"] = "waking up servers";
@@ -17,11 +17,12 @@
       .then((data) => {
         $wakeUpInfo["is"] = false;
         $wakeUpInfo["step"] = "servers are running!";
-        handleWakeup();
+        handleWakeup(true);
       })
       .catch((err) => {
         notify(`servers are unreachable (${err})`);
         $wakeUpInfo["step"] = "servers are unreachable (reload?)";
+        handleWakeup(false);
       });
   });
 </script>

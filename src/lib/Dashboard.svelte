@@ -8,6 +8,7 @@
   import { PlayerState, usePlayer } from "../player";
 
   import { tweened } from "svelte/motion";
+  import { AppState, TabKind } from "../store";
 
   let progress = tweened(0, { duration: 1000 });
 
@@ -20,7 +21,9 @@
 
 <div class="flex flex-col items-center justify-center relative">
   <Playlist />
-  <Settings />
+  {#if $AppState.view.tab == TabKind.SETTINGS}
+    <Settings />
+  {/if}
   <div
     style={$PlayerState.loaded ? "" : "visibility: hidden"}
     class="ring-1 ring-border rounded-t-md w-[95%] h-[10vh] absolute bottom-[11vh]"

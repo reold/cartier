@@ -13,7 +13,7 @@ export default defineConfig({
         name: "Cartier Manager",
         short_name: "Cartier",
         description: "Free spotify playlist downloader and manager for mobile",
-        theme_color: "#030712",
+        theme_color: "#1C2128",
         icons: [
           {
             src: "pwa-512x512.png",

@@ -130,11 +130,11 @@
   </div>
   <div
     class="flex flex-col justify-center items-center w-full space-y-2 pb-[11vh] relative"
+    in:slide={{ duration: 1000 }}
   >
-    <!-- in:slide={{ duration: 1000 }} -->
     {#if $AppState.view.tab == TabKind.DOWNLOADED}
       {#if !$CartierFile.playlists || $CartierFile.playlists.length == 0}
-        <p class="pt-10">no downloads</p>
+        <p class="pt-10">Nothing downloaded! 😕</p>
       {:else}
         {#each $CartierFile.playlists || [] as playlist}
           <BasicPlaylistCard {playlist} />
@@ -142,7 +142,7 @@
       {/if}
     {:else}
       {#each undownloadedPlaylists || [] as playlist}
-        <PlaylistCard {playlist} />
+        <PlaylistCard {playlist} disabled={$AppState.offline} />
       {/each}
     {/if}
   </div>

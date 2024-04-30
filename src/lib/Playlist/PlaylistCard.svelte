@@ -17,6 +17,7 @@
   }
 
   export let playlist: any;
+  export let disabled: boolean = false;
 
   const info = writable({
     showMore: false,
@@ -247,24 +248,27 @@
 
 <div class="w-[95%]">
   <div
-    class="w-full h-[15vh] rounded-md relative overflow-hidden ring-1 ring-border"
+    class="w-full h-[15vh] rounded-md relative overflow-hidden ring-1 ring-border bg-foreground"
   >
-    <div
-      class="absolute w-full h-full rounded-md blur-[2px]"
-      style={playlist["images"] && playlist["images"][0]
-        ? `background-image: url('${playlist["images"][0]["url"]}');
+    {#if !disabled}
+      <div
+        class="absolute w-full h-full rounded-md blur-[2px]"
+        style={playlist["images"] && playlist["images"][0]
+          ? `background-image: url('${playlist["images"][0]["url"]}');
     background-position: center;
     background-size: cover;
     background-blend-mode: multiply;
     background-color: rgba(0, 0, 0, 0.6)
     `
-        : "background-color: #22272E"}
-    />
+          : "background-color: #22272E"}
+      />
+    {/if}
+
     <div class="absolute w-full h-full rounded-md">
       <div
         class="grid grid-cols-12 h-full grid-rows-1 items-center justify-center"
       >
-        {#if playlist["images"] && playlist["images"].length > 0}
+        {#if !disabled && playlist["images"] && playlist["images"].length > 0}
           <img
             loading="lazy"
             src={playlist["images"][0]["url"]}
@@ -296,62 +300,39 @@
               by {playlist["owner"]["display_name"]}
             {/if}
           </p>
-          <div
-            class="flex flex-row justify-start items-center space-x-2 col-span-7"
-          >
-            <button
-              class="text-xs svg-icon bg-black/20 p-0 text-white"
-              on:click={toggleShowMore}
-              ><svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-[4ch] origin-center transition-transform duration-500 {$info.showMore
-                  ? 'rotate-180'
-                  : ''}"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                />
-              </svg>
-            </button>
-
-            {#if $info.download.done}
+          {#if !disabled}
+            <div
+              class="flex flex-row justify-start items-center space-x-2 col-span-7"
+            >
               <button
-                class="text-xs svg-icon bg-green-700 text-white"
-                on:click={handleSave}
-              >
-                save
-              </button>
-              <button class="text-xs svg-icon" on:click={handleSaveFs}>
-                <svg
+                class="text-xs svg-icon bg-black/20 p-0 text-white"
+                on:click={toggleShowMore}
+                ><svg
                   xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
                   viewBox="0 0 24 24"
-                  fill="currentColor"
-                  class="w-[2ch]"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  class="w-[4ch] origin-center transition-transform duration-500 {$info.showMore
+                    ? 'rotate-180'
+                    : ''}"
                 >
                   <path
-                    fill-rule="evenodd"
-                    d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z"
-                    clip-rule="evenodd"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
                   />
                 </svg>
-
-                local mp3
               </button>
-            {:else}
-              <button
-                class="text-xs svg-icon"
-                disabled={$info.downloading || $info.download.done}
-                on:click={handleDownloadPlaylist}
-              >
-                {#if $info.downloading}
-                  downloading
-                {:else}
+
+              {#if $info.download.done}
+                <button
+                  class="text-xs svg-icon bg-green-700 text-white"
+                  on:click={handleSave}
+                >
+                  save
+                </button>
+                <button class="text-xs svg-icon" on:click={handleSaveFs}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -365,15 +346,41 @@
                     />
                   </svg>
 
-                  download
-                {/if}
-              </button>
-            {/if}
-          </div>
+                  local mp3
+                </button>
+              {:else}
+                <button
+                  class="text-xs svg-icon"
+                  disabled={$info.downloading || $info.download.done}
+                  on:click={handleDownloadPlaylist}
+                >
+                  {#if $info.downloading}
+                    downloading
+                  {:else}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      class="w-[2ch]"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+
+                    download
+                  {/if}
+                </button>
+              {/if}
+            </div>
+          {/if}
         </div>
       </div>
     </div>
   </div>
+
   <div class="bg-primary h-[2px]" style="width: {$progress}%" />
   {#if $info.showMore}
     <div
