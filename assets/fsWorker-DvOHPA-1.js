@@ -1,0 +1,1 @@
+(function(){"use strict";self.onmessage=async c=>{let{mode:s,handle:a,content:t}=c.data,n;switch(typeof t=="string"?n=new TextEncoder().encode(t):t instanceof Blob&&(n=await t.arrayBuffer()),s){case"write":const e=await a.createSyncAccessHandle();e.truncate(0),e.write(n),e.flush(),e.close();break}self.postMessage(!0)}})();
