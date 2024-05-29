@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { OPFS, CartierFile, Socket } from "../../store";
+  import { OPFS, CartierFile, useOPFS } from "../../store";
 
   import { requests } from "../../server";
   import { notify } from "../../App.svelte";
@@ -76,30 +76,29 @@
   // save blobs in memory to OPFS
   const handleSave = () => {
     notify("saving to Cartier", true, 10, async (destroy) => {
-      const tracksDir = $OPFS.handle.tracksDir;
+      const cartierfile = $CartierFile;
 
       for (let { blob, id } of $info.memblobs) {
         // new downloads (not stored)
-        const track = await tracksDir.getFileHandle(`${id}.mp3`, {
-          create: true,
-        });
+        await useOPFS.write(`tracks/${id}.mp3`, blob);
 
-        $CartierFile.tracks = [
-          ...$CartierFile.tracks,
+        cartierfile.tracks = [
+          ...cartierfile.tracks,
           {
             id,
             name: $info.tracks.find((track) => track.id == id).name,
             dependants: [],
           },
         ];
+        // const writable = await track.createWritable();
 
-        const writable = await track.createWritable();
-        await writable.write(blob);
-        await writable.close();
+        // console.info("trying to write to writable", writable);
+        // writable.write(blob);
+        // writable.close();
       }
 
-      $CartierFile["playlists"] = [
-        ...$CartierFile["playlists"],
+      cartierfile["playlists"] = [
+        ...cartierfile["playlists"],
         {
           name: playlist["name"],
           url: playlist["external_url"],
@@ -111,16 +110,18 @@
       ];
 
       for (let track of $info.tracks) {
-        for (let [i, t] of $CartierFile.tracks.entries()) {
+        for (let [i, t] of cartierfile.tracks.entries()) {
           if (t.id == track.id) {
-            $CartierFile.tracks[i].dependants = [
-              ...$CartierFile.tracks[i].dependants,
+            cartierfile.tracks[i].dependants = [
+              ...cartierfile.tracks[i].dependants,
               playlist.id,
             ];
             break;
           }
         }
       }
+
+      $CartierFile = cartierfile;
 
       destroy();
       notify("saved to Cartier!", false, 2);

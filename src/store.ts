@@ -1,6 +1,7 @@
 import { writable, get } from "svelte/store";
 import { requests } from "./server";
-import app from "./main";
+import FsWorker from "./fsWorker?worker";
+import { notify } from "./App.svelte";
 
 export enum TabKind {
   PLAYLISTS,
@@ -66,15 +67,34 @@ export const OPFS = writable({
     cartierFile: {} as FileSystemFileHandle,
     tracksDir: {} as FileSystemDirectoryHandle,
   },
+  workerLock: undefined as undefined | Promise<void>,
 });
 export const CartierFile = writable({
   playlists: [] as BasicPlaylist[],
   tracks: [] as BasicTrack[],
-  info: { type: "cartier-file69", version: 1 },
+  info: { type: "cartier-file", version: 1 },
   data: {},
 });
 
 export const Socket = writable({ io: {}, loaded: false });
+
+export const useOPFS = {
+  write: async (path: string, content: any) => {
+    const worker = new FsWorker();
+
+    worker.postMessage({
+      mode: "write",
+      path,
+      content: content,
+    });
+
+    return new Promise<void>((resolve, reject) => {
+      worker.addEventListener("message", () => {
+        resolve();
+      });
+    });
+  },
+};
 
 export const useApp = {
   setOPFSHandle: async () => {
@@ -99,31 +119,21 @@ export const useApp = {
     let opfs = get(OPFS);
 
     const readableCF = await opfs.handle.cartierFile.getFile();
-    CartierFile.set(JSON.parse(await readableCF.text()));
+
+    // create blank cartier file
+    if (readableCF.size == 0) {
+      await useOPFS.write("cartier.json", JSON.stringify(get(CartierFile)));
+    } else {
+      CartierFile.set(JSON.parse(await readableCF.text()));
+    }
 
     CartierFile.subscribe(async (content) => {
-      const writableCF = await opfs.handle.cartierFile.createWritable();
-      await writableCF.write(JSON.stringify(content));
-      await writableCF.close();
+      await useOPFS.write("cartier.json", JSON.stringify(content));
     });
   },
 
   initCartierFile: async () => {
     await useApp.setOPFSHandle();
-
-    let opfs = get(OPFS);
-
-    const readableCF = await opfs.handle.cartierFile.getFile();
-
-    // create empty json cartier file
-    if (readableCF.size == 0) {
-      console.info("cartier file is empty!");
-
-      const writableCF = await opfs.handle.cartierFile.createWritable();
-      await writableCF.write(JSON.stringify(get(CartierFile)));
-      await writableCF.close();
-    }
-
     await useApp.bufferCartierFile();
   },
   login: async (
