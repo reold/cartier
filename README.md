@@ -4,7 +4,7 @@
 
 **[Cartier Manager](https://reold.github.io/cartier) allows you to download and play music**. It is optimized for mobile devices such that anyone can listen to uninterrupted music, offline.
 
-After sharing your _Spotify Profile Link_ with the app, you can quickly start to download all public playlists from your profile. After a playlist download is complete, you could either save it as an _.mp3_ or, save it to the browser's OPFS. If you choose the latter, you gain the ability to play that particular playlist through Cartier Manager's Player.
+After sharing your _Spotify Profile Link_ with the app, you can quickly start to download all public playlists from your profile. After a playlist download is complete, you could either save it as an _.mp3_ or, save it to the browser's [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system). If you choose the latter, you gain the ability to play that particular playlist through Cartier Manager's Player.
 
 ## Use it now!
 The app is always available at
@@ -17,3 +17,7 @@ The backend is served through multiple hosting providers for free. Some of the s
 
 ## Issues? No worries
 If you face any issues using the application or have feedback, please post them in the issues tab of our github page. The link for which is also available through the app.
+
+## Development
+["pwa"](https://github.com/reold/cartier/tree/pwa) is the current development branch. This branch focuses on delivering [Progressive Web App](https://web.dev/explore/progressive-web-apps) functionalities.
+
