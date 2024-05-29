@@ -90,11 +90,6 @@
             dependants: [],
           },
         ];
-        // const writable = await track.createWritable();
-
-        // console.info("trying to write to writable", writable);
-        // writable.write(blob);
-        // writable.close();
       }
 
       cartierfile["playlists"] = [
@@ -225,7 +220,25 @@
             let [ok, blob, trackid] = await requests.getStreamPlaylist(key);
 
             if (!ok) {
-              notify(`failed downloading a track (in "${playlist["name"]}")`);
+              const failTrack = $info.tracks.find((track) => {
+                return track.id == trackid;
+              });
+
+              if (failTrack) {
+                notify(
+                  `failed downloading "${failTrack?.name.slice(0, 10)}${failTrack?.name.length > 10 ? "..." : ""}" in "${playlist["name"]}"`,
+                  false,
+                  5
+                );
+              } else {
+                notify(
+                  `failed downloading a track in "${playlist["name"]}"`,
+                  false,
+                  5
+                );
+              }
+
+              $info.download.status[trackid] = "failed";
               continue;
             }
 
@@ -356,7 +369,7 @@
                   on:click={handleDownloadPlaylist}
                 >
                   {#if $info.downloading}
-                    downloading
+                    {$info.download.stage}
                   {:else}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
