@@ -1,3 +1,0 @@
-(function(){"use strict";const r=async(s,e)=>{if(e.includes("/")){let a=e.split("/")[0];return await r(await s.getDirectoryHandle(a),e.slice(a.length+1))}else return await s.getFileHandle(e,{create:!0})};self.onmessage=async s=>{let{mode:e,path:a,content:c}=s.data,t;typeof c=="string"?t=new TextEncoder().encode(c):c instanceof Blob&&(t=await c.arrayBuffer()),console.log(`[FS-WORKER]: ${e} -ing
-${t==null?void 0:t.slice(0,50)}...
-to: ${a}`);let i=await navigator.storage.getDirectory(),o=await r(i,a);switch(e){case"write":const n=await o.createSyncAccessHandle();n.truncate(0),n.write(t),n.flush(),n.close();break}self.postMessage(!0)}})();
