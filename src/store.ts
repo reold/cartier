@@ -82,15 +82,21 @@ export const useOPFS = {
   write: async (path: string, content: any) => {
     const worker = new FsWorker();
 
+    const id = Math.random();
+
     worker.postMessage({
       mode: "write",
       path,
       content: content,
+      id,
     });
 
     return new Promise<void>((resolve, reject) => {
-      worker.addEventListener("message", () => {
-        resolve();
+      worker.addEventListener("message", (event) => {
+        if (event.data == id) {
+          console.log(`[FS-CONN]: ${id} finished successfully`);
+          resolve();
+        }
       });
     });
   },

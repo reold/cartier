@@ -6,17 +6,6 @@ export type QueueTrack = {
   name: string;
 };
 
-// export const PlayerState = writable({
-//   loaded: true, // DEV: change to false for production
-//   queue: [] as QueueTrack[],
-//   playback: {
-//     handle: {} as HTMLAudioElement,
-//     id: "",
-//     name: "Alapuzha Pattanathil (from the beloved 90s movie unknown unknowinsit)",
-//     playing: false,
-//   },
-// });
-
 export const PlayerState = writable({
   loaded: false,
   queue: [] as QueueTrack[],
@@ -28,6 +17,12 @@ export const PlayerState = writable({
     time: 0,
     playing: false,
   },
+});
+
+PlayerState.subscribe((playerstate) => {
+  navigator.mediaSession.playbackState = playerstate.playback.playing
+    ? "playing"
+    : "paused";
 });
 
 export const usePlayer = {
@@ -52,6 +47,9 @@ export const usePlayer = {
     playerstate.playback.handle = new Audio(blobURL);
     playerstate.playback.handle.play();
 
+    PlayerState.set(playerstate);
+    usePlayer.mediaSession.loadSession();
+
     playerstate.playback.handle.addEventListener("loadeddata", () => {
       PlayerState.update((playerstate) => {
         playerstate.playback.dur = playerstate.playback.handle.duration;
@@ -66,16 +64,20 @@ export const usePlayer = {
       });
     });
 
-    playerstate.playback.handle.addEventListener("ended", () => {
+    const onEnd = () => {
       let playerstate = get(PlayerState);
 
       if (playerstate.queue.length > 0) {
         usePlayer.next();
         usePlayer.play();
       }
-    });
+    };
 
-    PlayerState.set(playerstate);
+    playerstate.playback.handle.addEventListener("ended", onEnd);
+
+    navigator.mediaSession.setActionHandler("nexttrack", onEnd);
+    navigator.mediaSession.setActionHandler("pause", usePlayer.pause);
+    navigator.mediaSession.setActionHandler("play", usePlayer.resume);
   },
 
   pause: () => {
@@ -148,6 +150,16 @@ export const usePlayer = {
 
       playlist.tracks.forEach((id) => {
         usePlayer.queue.addTrack(id, insert);
+      });
+    },
+  },
+
+  mediaSession: {
+    loadSession: () => {
+      let playerstate = get(PlayerState);
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: playerstate.playback.name,
       });
     },
   },
