@@ -1,4 +1,4 @@
-const getHandleFromPath: FileSystemFileHandle = async (
+const getHandleFromPath: any = async (
   base: FileSystemDirectoryHandle,
   path: string
 ) => {
@@ -19,9 +19,10 @@ self.onmessage = async (
     mode: string;
     path: string;
     content: string | Blob;
+    id: string;
   }>
 ) => {
-  let { mode, path, content: src_content } = event.data;
+  let { mode, path, content: src_content, id } = event.data;
 
   let content;
 
@@ -54,7 +55,7 @@ self.onmessage = async (
       break;
   }
 
-  self.postMessage(true);
+  self.postMessage(id);
 };
 
 export {};
